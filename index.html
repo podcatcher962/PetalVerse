@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>飞花令 · PetalVerse</title>
+<style>
+:root{
+  --bg:#f2e6cd; --card:#faf0dc; --ink:#3e2f1d; --gold:#7a5c1e; --line:#b8914f;
+  --muted:#8a744d; --accent:#9c2b2b; --chip:#f5e9cf; --chip-ink:#5a4520;
+  --overlay:rgba(40,30,15,.45);
+}
+[data-theme="dark"]{
+  --bg:#0d0d1a; --card:#13132b; --ink:#c8d6e5; --gold:#ffd700; --line:#3a3a5c;
+  --muted:#7d8aa0; --accent:#e8c46a; --chip:#1a1a36; --chip-ink:#c8d6e5;
+  --overlay:rgba(0,0,0,.6);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{font-family:"KaiTi","STKaiti","Georgia","SimSun",serif; background:var(--bg); color:var(--ink); transition:background .3s,color .3s; line-height:1.7;}
+.wrap{max-width:760px; margin:0 auto; padding:24px 18px 40px;}
+header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:6px;}
+h1{font-size:30px; font-weight:600; letter-spacing:3px; color:var(--gold);}
+h1 .en{font-size:13px; letter-spacing:2px; color:var(--muted); display:block; font-family:Georgia,serif; font-weight:400;}
+.sub{font-size:14px; color:var(--muted); margin-bottom:20px; letter-spacing:1px;}
+.toolbar{display:flex; gap:8px;}
+.toolbar button{background:var(--card); color:var(--ink); border:1px solid var(--line); border-radius:20px; padding:5px 14px; font-size:13px; cursor:pointer; font-family:inherit; transition:all .2s;}
+.toolbar button:hover{border-color:var(--gold); color:var(--gold);}
+.chips{display:flex; flex-wrap:wrap; gap:9px; margin:18px 0 24px;}
+.chip{min-width:52px; text-align:center; padding:8px 6px; border-radius:10px; background:var(--chip); color:var(--chip-ink); border:1px solid var(--line); font-size:22px; cursor:pointer; transition:all .18s; font-family:inherit; line-height:1.2;}
+.chip small{display:block; font-size:9px; letter-spacing:1px; color:var(--muted); font-family:Georgia,serif;}
+.chip:hover{transform:translateY(-2px); border-color:var(--gold);}
+.chip.on{background:var(--accent); color:#fff; border-color:var(--accent);}
+.chip.on small{color:rgba(255,255,255,.85);}
+.panel{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:20px 22px; margin-bottom:18px;}
+.panel h2{font-size:17px; color:var(--gold); margin-bottom:4px; font-weight:600; letter-spacing:1px;}
+.panel .hint{font-size:12px; color:var(--muted); margin-bottom:14px;}
+.randbar{display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
+.btn{background:var(--accent); color:#fff; border:none; border-radius:22px; padding:8px 20px; font-size:14px; cursor:pointer; font-family:inherit; letter-spacing:1px; transition:opacity .2s;}
+.btn:hover{opacity:.85;}
+.spot{font-size:20px; text-align:center; padding:16px; border:1px dashed var(--line); border-radius:10px; margin-bottom:16px; color:var(--ink); letter-spacing:1px; min-height:30px;}
+.spot .who{display:block; font-size:13px; color:var(--muted); margin-top:6px; letter-spacing:0;}
+ul.plist{list-style:none;}
+ul.plist li{padding:11px 12px; border-bottom:1px dashed var(--line); display:flex; justify-content:space-between; align-items:baseline; gap:12px; font-size:15px; cursor:pointer; transition:background .15s;}
+ul.plist li:hover{background:var(--chip);}
+ul.plist li:last-child{border-bottom:none;}
+ul.plist .t{color:var(--ink); flex:1;}
+ul.plist .src{color:var(--muted); font-size:12px; white-space:nowrap;}
+ul.plist li .star{cursor:pointer; color:var(--muted); font-size:16px; flex-shrink:0;}
+ul.plist li .star.on{color:var(--gold);}
+.tabs{display:flex; gap:8px; margin-bottom:14px;}
+.tab{flex:1; text-align:center; padding:8px; border:1px solid var(--line); border-radius:8px; cursor:pointer; font-size:14px; color:var(--muted); transition:all .2s;}
+.tab.on{background:var(--accent); color:#fff; border-color:var(--accent);}
+.tabbody{font-size:14px; color:var(--ink);}
+.tabbody h3{font-size:15px; color:var(--gold); margin:12px 0 6px; font-weight:600;}
+.tabbody p{margin-bottom:10px;}
+.tabbody ul{margin:0 0 10px 18px;}
+.tabbody li{margin-bottom:6px;}
+footer{text-align:center; font-size:12px; color:var(--muted); margin-top:26px; letter-spacing:1px;}
+footer a{color:var(--gold); text-decoration:none;}
+.modal{position:fixed; inset:0; background:var(--overlay); display:none; align-items:center; justify-content:center; z-index:99; padding:20px;}
+.modal.show{display:flex;}
+.modal .box{background:var(--card); border:1px solid var(--line); border-radius:14px; max-width:560px; width:100%; max-height:82vh; overflow:auto; padding:26px 28px; position:relative;}
+.modal .close{position:absolute; top:12px; right:16px; font-size:22px; cursor:pointer; color:var(--muted); background:none; border:none;}
+.modal .full{font-size:19px; line-height:2; margin:8px 0 14px; letter-spacing:1px; color:var(--ink); text-align:center;}
+.modal .meta{text-align:center; color:var(--muted); font-size:13px; margin-bottom:14px;}
+.modal .en{font-size:14px; font-style:italic; color:var(--gold); text-align:center; margin-bottom:14px; font-family:Georgia,serif;}
+.modal .note{font-size:14px; color:var(--ink); border-top:1px dashed var(--line); padding-top:12px;}
+</style>
+</head>
+<body data-theme="light">
+<div class="wrap">
+  <header>
+    <h1>飞花令<span class="en">PETAL VERSE</span></h1>
+    <div class="toolbar">
+      <button id="btnTheme" onclick="toggleTheme()">🌙 暗色</button>
+      <button id="btnLang" onclick="toggleLang()">EN</button>
+    </div>
+  </header>
+  <div class="sub" id="subtitle">一字飞花，满目诗情</div>
+
+  <div class="chips" id="chips"></div>
+
+  <div class="panel">
+    <h2 id="ptitle">选一个令字</h2>
+    <div class="hint" id="phint">点击上方令字，展开含该字的经典诗句；再点诗句可看完整解读</div>
+    <div class="randbar">
+      <button class="btn" id="btnRand" onclick="randomPick()">随机一句</button>
+      <button class="btn" id="btnFav" onclick="toggleFavList()">我的收藏</button>
+    </div>
+    <div class="spot" id="spot">—</div>
+    <ul class="plist" id="plist"></ul>
+  </div>
+
+  <div class="panel">
+    <div class="tabs" id="tabs">
+      <div class="tab on" data-t="use" onclick="switchTab('use')">使用说明</div>
+      <div class="tab" data-t="disc" onclick="switchTab('disc')">免责声明</div>
+      <div class="tab" data-t="about" onclick="switchTab('about')">关于</div>
+    </div>
+    <div class="tabbody" id="tabbody"></div>
+  </div>
+
+  <footer>永远的兰兰 · Lanlan Eternal</footer>
+</div>
+
+<div class="modal" id="modal">
+  <div class="box">
+    <button class="close" onclick="closeModal()">×</button>
+    <div class="full" id="mFull"></div>
+    <div class="meta" id="mMeta"></div>
+    <div class="en" id="mEn"></div>
+    <div class="note" id="mNote"></div>
+  </div>
+</div>
+
+<script>
+const FEIHUA=[
+{ch:"花",en:"Flower",poems:[
+{L:"春城无处不飞花",F:"春城无处不飞花，寒食东风御柳斜。日暮汉宫传蜡烛，轻烟散入五侯家。",T:"寒食",A:"韩翃",E:"Petals drift through the spring city with nowhere to rest.",N:"唐代韩翃的名句，写长安寒食节暮春飞花的盛景。「飞花令」一词即源于此诗。"},
+{L:"人面桃花相映红",F:"去年今日此门中，人面桃花相映红。人面不知何处去，桃花依旧笑春风。",T:"题都城南庄",A:"崔护",E:"Her face and the peach blossoms glowed the same rosy red.",N:"崔护的传世名篇，写物是人非的怅惘。人面与桃花相映，后人以「人面桃花」喻所爱难再见。"},
+{L:"花开堪折直须折",F:"劝君莫惜金缕衣，劝君惜取少年时。花开堪折直须折，莫待无花空折枝。",T:"金缕衣",A:"杜秋娘",E:"Pluck the blossom while it blooms—do not wait till it is bare.",N:"劝人珍惜光阴的名句，以花开须折喻青春易逝，应及时把握。"},
+{L:"感时花溅泪，恨别鸟惊心",F:"国破山河在，城春草木深。感时花溅泪，恨别鸟惊心。烽火连三月，家书抵万金。白头搔更短，浑欲不胜簪。",T:"春望",A:"杜甫",E:"Grieving for the times, the flowers draw tears; hating to part, the birds alarm the heart.",N:"杜甫安史之乱中写于长安，借花鸟写忧国思家之痛，是杜诗沉郁风格的代表。"},
+{L:"乱花渐欲迷人眼",F:"孤山寺北贾亭西，水面初平云脚低。几处早莺争暖树，谁家新燕啄春泥。乱花渐欲迷人眼，浅草才能没马蹄。最爱湖东行不足，绿杨阴里白沙堤。",T:"钱塘湖春行",A:"白居易",E:"Profuse blossoms gradually dazzle the eye.",N:"白居易写西湖早春的名句，以「乱花」「浅草」描摹盎然春意。"},
+{L:"落花时节又逢君",F:"岐王宅里寻常见，崔九堂前几度闻。正是江南好风景，落花时节又逢君。",T:"江南逢李龟年",A:"杜甫",E:"In the season of falling flowers, I meet you once again.",N:"杜甫晚年重逢故人李龟年所作，以「落花时节」暗寓国运衰微与身世飘零。"},
+{L:"无可奈何花落去",F:"一曲新词酒一杯，去年天气旧亭台。夕阳西下几时回？无可奈何花落去，似曾相识燕归来。小园香径独徘徊。",T:"浣溪沙",A:"晏殊",E:"Helplessly the flowers fall away.",N:"晏殊伤春惜时之词，以花落燕归写光阴流转，「无可奈何」道尽无力挽留之感。"},
+{L:"人闲桂花落",F:"人闲桂花落，夜静春山空。月出惊山鸟，时鸣春涧中。",T:"鸟鸣涧",A:"王维",E:"At leisure I watch cassia blossoms fall.",N:"王维山水田园诗的名篇，以极静写极动，意境空灵幽寂。"},
+{L:"映日荷花别样红",F:"毕竟西湖六月中，风光不与四时同。接天莲叶无穷碧，映日荷花别样红。",T:"晓出净慈寺送林子方",A:"杨万里",E:"Lotus flowers in the sunlight glow a red beyond compare.",N:"杨万里写西湖六月荷花的千古名句，以「接天」「映日」极言荷景壮阔。"},
+{L:"竹外桃花三两枝",F:"竹外桃花三两枝，春江水暖鸭先知。蒌蒿满地芦芽短，正是河豚欲上时。",T:"惠崇春江晚景",A:"苏轼",E:"A few peach blossoms bloom beyond the bamboo grove.",N:"苏轼为惠崇画作所题，写早春江景，含「春江水暖鸭先知」这一富含哲理的佳句。"},
+{L:"黄四娘家花满蹊",F:"黄四娘家花满蹊，千朵万朵压枝低。留连戏蝶时时舞，自在娇莺恰恰啼。",T:"江畔独步寻花",A:"杜甫",E:"Huang Siniang's path is laden with blossoms.",N:"杜甫江畔独步赏花之作，以「千朵万朵」写繁花压枝的烂漫春景。"},
+{L:"花自飘零水自流",F:"红藕香残玉簟秋。轻解罗裳，独上兰舟。云中谁寄锦书来，雁字回时，月满西楼。花自飘零水自流。一种相思，两处闲愁。此情无计可消除，才下眉头，却上心头。",T:"一剪梅",A:"李清照",E:"Flowers drift away and water flows on, each to its own.",N:"李清照写相思的名篇，以花落水流喻离别与思念的无奈。"},
+{L:"花谢花飞花满天",F:"花谢花飞花满天，红消香断有谁怜？游丝软系飘春榭，落絮轻沾扑绣帘。……",T:"葬花吟",A:"曹雪芹",E:"Blossoms wither and drift, filling the sky.",N:"《红楼梦》黛玉葬花，花谢花飞，凄美动人。"},
+{L:"桃花依旧笑春风",F:"去年今日此门中，人面桃花相映红。人面不知何处去，桃花依旧笑春风。",T:"题都城南庄",A:"崔护",E:"The peach blossoms still smile in the spring breeze.",N:"崔护写物是人非，桃花依旧，人事已非。"},
+{L:"我花开后百花杀",F:"待到秋来九月八，我花开后百花杀。冲天香阵透长安，满城尽带黄金甲。",T:"不第后赋菊",A:"黄巢",E:"When my bloom comes, a hundred flowers perish.",N:"黄巢咏菊，气势凌厉，暗寓雄心壮志。"}]},
+{ch:"月",en:"Moon",poems:[
+{L:"床前明月光",F:"床前明月光，疑是地上霜。举头望明月，低头思故乡。",T:"静夜思",A:"李白",E:"Moonlight spills before my bed.",N:"李白最广为传诵的小诗，以明月起兴，寄寓游子思乡之情。"},
+{L:"举头望明月",F:"床前明月光，疑是地上霜。举头望明月，低头思故乡。",T:"静夜思",A:"李白",E:"I raise my head and gaze at the bright moon.",N:"与上句同出《静夜思》，一望一思之间，乡愁尽出。"},
+{L:"明月几时有",F:"明月几时有？把酒问青天。不知天上宫阙，今夕是何年。……",T:"水调歌头",A:"苏轼",E:"When did this bright moon first appear?",N:"苏轼中秋词的开篇之问，把酒问天，气象宏阔，是中秋词的绝唱。"},
+{L:"月是故乡明",F:"戍鼓断人行，边秋一雁声。露从今夜白，月是故乡明。有弟皆分散，无家问死生。寄书长不达，况乃未休兵。",T:"月夜忆舍弟",A:"杜甫",E:"The moon is brightest over my homeland.",N:"杜甫乱世思乡怀弟之作，「月是故乡明」道尽游子对故乡的深情。"},
+{L:"海上生明月",F:"海上生明月，天涯共此时。情人怨遥夜，竟夕起相思。灭烛怜光满，披衣觉露滋。不堪盈手赠，还寝梦佳期。",T:"望月怀远",A:"张九龄",E:"A bright moon rises over the sea.",N:"张九龄望月怀人的名句，「天涯共此时」已成华人共同的团圆意象。"},
+{L:"举杯邀明月",F:"花间一壶酒，独酌无相亲。举杯邀明月，对影成三人。……",T:"月下独酌",A:"李白",E:"I raise my cup and invite the bright moon.",N:"李白孤独中邀月共饮，将明月、身影拟作伴侣，浪漫而旷达。"},
+{L:"秦时明月汉时关",F:"秦时明月汉时关，万里长征人未还。但使龙城飞将在，不教胡马度阴山。",T:"出塞",A:"王昌龄",E:"The moon of Qin, the passes of Han, still shine and stand.",N:"王昌龄边塞诗名句，时空交叠，气势苍凉，被誉为唐人七绝压卷。"},
+{L:"月上柳梢头",F:"去年元夜时，花市灯如昼。月上柳梢头，人约黄昏后。今年元夜时，月与灯依旧。不见去年人，泪湿春衫袖。",T:"生查子·元夕",A:"欧阳修",E:"The moon climbs above the willow tips.",N:"写元宵约会的千古名句，月与柳交织出旖旎而略带感伤的夜色。"},
+{L:"月落乌啼霜满天",F:"月落乌啼霜满天，江枫渔火对愁眠。姑苏城外寒山寺，夜半钟声到客船。",T:"枫桥夜泊",A:"张继",E:"The moon sets, crows cry, frost fills the sky.",N:"张继羁旅夜泊之作，月落、乌啼、霜天、钟声，构成幽寂的秋夜愁绪。"},
+{L:"露似真珠月似弓",F:"一道残阳铺水中，半江瑟瑟半江红。可怜九月初三夜，露似真珠月似弓。",T:"暮江吟",A:"白居易",E:"Dewdrops gleam like pearls, the crescent moon like a bow.",N:"白居易写秋江暮色，以珠、弓设喻，清新可爱。"},
+{L:"月有阴晴圆缺",F:"人有悲欢离合，月有阴晴圆缺，此事古难全。但愿人长久，千里共婵娟。",T:"水调歌头",A:"苏轼",E:"The moon waxes and wanes, now full, now broken.",N:"苏轼借月之圆缺喻人生聚散，豁达通透，收于「千里共婵娟」的美好祝愿。"},
+{L:"我寄愁心与明月",F:"杨花落尽子规啼，闻道龙标过五溪。我寄愁心与明月，随风直到夜郎西。",T:"闻王昌龄左迁龙标遥有此寄",A:"李白",E:"I entrust my sorrow to the bright moon.",N:"李白闻好友被贬而作，把愁心托付明月，随友远行，情真意切。"},
+{L:"海上明月共潮生",F:"春江潮水连海平，海上明月共潮生。滟滟随波千万里，何处春江无月明。……",T:"春江花月夜",A:"张若虚",E:"Over the sea, the bright moon rises with the tide.",N:"张若虚开篇，江海明月，浩瀚空明。"},
+{L:"今月曾经照古人",F:"今人不见古时月，今月曾经照古人。古人今人若流水，共看明月皆如此。……",T:"把酒问月",A:"李白",E:"The moon of today once shone on men of old.",N:"李白把酒问月，月之永恒与人生短暂，哲思深远。"},
+{L:"明月松间照",F:"空山新雨后，天气晚来秋。明月松间照，清泉石上流。……",T:"山居秋暝",A:"王维",E:"Bright moon shines through the pines.",N:"王维写山居，明月松间，清幽空灵。"}]},
+{ch:"风",en:"Wind",poems:[
+{L:"春风又绿江南岸",F:"京口瓜洲一水间，钟山只隔数重山。春风又绿江南岸，明月何时照我还。",T:"泊船瓜洲",A:"王安石",E:"Spring wind again greens the southern shore.",N:"王安石炼字的典范，一个「绿」字活化春风，历来传为佳话。"},
+{L:"长风破浪会有时",F:"金樽清酒斗十千，玉盘珍羞直万钱。停杯投箸不能食，拔剑四顾心茫然。欲渡黄河冰塞川，将登太行雪满山。闲来垂钓碧溪上，忽复乘舟梦日边。行路难，行路难，多歧路，今安在？长风破浪会有时，直挂云帆济沧海。",T:"行路难",A:"李白",E:"The day will come to ride the long wind and break the waves.",N:"李白豪情万丈的名句，以长风破浪喻志向终将实现，激励无数后人。"},
+{L:"野火烧不尽，春风吹又生",F:"离离原上草，一岁一枯荣。野火烧不尽，春风吹又生。远芳侵古道，晴翠接荒城。又送王孙去，萋萋满别情。",T:"赋得古原草送别",A:"白居易",E:"Wildfire cannot burn it out; spring wind revives it again.",N:"白居易咏草的千古名句，以草的顽强喻生命的不屈，含送别之意。"},
+{L:"春风不度玉门关",F:"黄河远上白云间，一片孤城万仞山。羌笛何须怨杨柳，春风不度玉门关。",T:"凉州词",A:"王之涣",E:"Spring wind never crosses the Jade Gate Pass.",N:"王之涣边塞诗名句，以春风不度写边地的荒寒与戍卒的孤寂。"},
+{L:"夜来风雨声",F:"春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。",T:"春晓",A:"孟浩然",E:"Through the night came the sound of wind and rain.",N:"孟浩然清新自然的小诗，夜雨催花落，惜春之情淡而有味。"},
+{L:"大风起兮云飞扬",F:"大风起兮云飞扬，威加海内兮归故乡，安得猛士兮守四方！",T:"大风歌",A:"刘邦",E:"A great wind rises, clouds soaring high.",N:"汉高祖刘邦还乡所作，豪迈苍凉，抒写守成之思。"},
+{L:"风吹草低见牛羊",F:"敕勒川，阴山下。天似穹庐，笼盖四野。天苍苍，野茫茫，风吹草低见牛羊。",T:"敕勒歌",A:"佚名",E:"When wind bends the grass low, the cattle and sheep appear.",N:"北朝民歌，写草原辽阔，风吹草低见牛羊，画面壮美。"},
+{L:"风急天高猿啸哀",F:"风急天高猿啸哀，渚清沙白鸟飞回。无边落木萧萧下，不尽长江滚滚来。万里悲秋常作客，百年多病独登台。艰难苦恨繁霜鬓，潦倒新停浊酒杯。",T:"登高",A:"杜甫",E:"The wind is sharp, the sky high, apes wail their grief.",N:"杜甫晚年登高之作，被誉为「七律之冠」，秋景苍凉，身世沉郁。"},
+{L:"随风潜入夜",F:"好雨知时节，当春乃发生。随风潜入夜，润物细无声。野径云俱黑，江船火独明。晓看红湿处，花重锦官城。",T:"春夜喜雨",A:"杜甫",E:"It steals in with the wind on a quiet night.",N:"杜甫写春雨的名句，以「潜入夜」「细无声」写春雨的轻柔无声。"},
+{L:"二月春风似剪刀",F:"碧玉妆成一树高，万条垂下绿丝绦。不知细叶谁裁出，二月春风似剪刀。",T:"咏柳",A:"贺知章",E:"The February spring wind cuts like scissors.",N:"贺知章咏柳的巧妙比喻，把春风比作裁剪柳叶的剪刀，生动传神。"},
+{L:"北风卷地白草折",F:"北风卷地白草折，胡天八月即飞雪。忽如一夜春风来，千树万树梨花开。……",T:"白雪歌送武判官归京",A:"岑参",E:"The north wind sweeps the ground and snaps the white grass.",N:"岑参边塞诗名篇，写塞外苦寒，后接「千树万树梨花开」咏雪奇景。"},
+{L:"清风徐来，水波不兴",F:"壬戌之秋，七月既望，苏子与客泛舟游于赤壁之下。清风徐来，水波不兴。……",T:"赤壁赋",A:"苏轼",E:"A gentle breeze drifts in, and no ripple stirs the water.",N:"苏轼《赤壁赋》开篇，清风明月之间，引出旷达的人生之思。"},
+{L:"东风不与周郎便",F:"折戟沉沙铁未销，自将磨洗认前朝。东风不与周郎便，铜雀春深锁二乔。",T:"赤壁",A:"杜牧",E:"Had the east wind not favored Zhou Yu.",N:"杜牧咏史，东风之便，翻转赤壁战局。"},
+{L:"古道西风瘦马",F:"枯藤老树昏鸦，小桥流水人家，古道西风瘦马。夕阳西下，断肠人在天涯。",T:"天净沙·秋思",A:"马致远",E:"On the old road, a lean horse in the west wind.",N:"马致远秋思，古道西风瘦马，苍凉孤寂。"},
+{L:"西风烈",F:"西风烈，长空雁叫霜晨月。霜晨月，马蹄声碎，喇叭声咽。……",T:"忆秦娥·娄山关",A:"毛泽东",E:"The west wind blows fierce.",N:"毛泽东词，西风烈，苍劲雄浑。"}]},
+{ch:"雪",en:"Snow",poems:[
+{L:"北风吹雁雪纷纷",F:"千里黄云白日曛，北风吹雁雪纷纷。莫愁前路无知己，天下谁人不识君。",T:"别董大",A:"高适",E:"The north wind drives the wild geese through drifting snow.",N:"高适送别诗，先写风雪荒寒，再以豪语宽慰友人，慷慨激越。"},
+{L:"窗含西岭千秋雪",F:"两个黄鹂鸣翠柳，一行白鹭上青天。窗含西岭千秋雪，门泊东吴万里船。",T:"绝句",A:"杜甫",E:"My window frames the eternal snow of the western peaks.",N:"杜甫成都草堂所作，以「千秋雪」「万里船」写景的辽阔与悠远。"},
+{L:"独钓寒江雪",F:"千山鸟飞绝，万径人踪灭。孤舟蓑笠翁，独钓寒江雪。",T:"江雪",A:"柳宗元",E:"Alone he fishes the cold river in the snow.",N:"柳宗元被贬后所作，以孤舟独钓写高洁孤傲的心境，意境冷寂。"},
+{L:"梅须逊雪三分白",F:"梅雪争春未肯降，骚人阁笔费评章。梅须逊雪三分白，雪却输梅一段香。",T:"雪梅",A:"卢梅坡",E:"The plum must yield to snow three parts of whiteness.",N:"宋人咏梅雪的名句，梅雪各擅胜场，白与香之辨富含理趣。"},
+{L:"雪却输梅一段香",F:"梅雪争春未肯降，骚人阁笔费评章。梅须逊雪三分白，雪却输梅一段香。",T:"雪梅",A:"卢梅坡",E:"But snow loses to the plum a share of fragrance.",N:"与上句对举，写雪之白与梅之香各有所长，妙趣横生。"},
+{L:"风雪夜归人",F:"日暮苍山远，天寒白屋贫。柴门闻犬吠，风雪夜归人。",T:"逢雪宿芙蓉山主人",A:"刘长卿",E:"A traveler returns home through wind and snow at night.",N:"刘长卿旅途投宿之作，风雪犬吠中见贫家的温暖，画面感极强。"},
+{L:"燕山雪花大如席",F:"烛龙栖寒门，光曜犹旦开。……燕山雪花大如席，片片吹落轩辕台。",T:"北风行",A:"李白",E:"Snowflakes over Yanshan are as large as mats.",N:"李白以夸张之笔写燕山苦寒，「雪花大如席」想象奇绝，千古传诵。"},
+{L:"纷纷暮雪下辕门",F:"北风卷地白草折，胡天八月即飞雪。……纷纷暮雪下辕门，风掣红旗冻不翻。",T:"白雪歌送武判官归京",A:"岑参",E:"Thick evening snow falls upon the camp gate.",N:"岑参写塞外送别，暮雪纷纷，红旗冻凝，戍边之苦如在目前。"},
+{L:"白雪却嫌春色晚",F:"新年都未有芳华，二月初惊见草芽。白雪却嫌春色晚，故穿庭树作飞花。",T:"春雪",A:"韩愈",E:"The snow, impatient for spring's late coming, plays at petals.",N:"韩愈写春雪，把雪拟人化作飞花，为早春增添灵动趣味。"},
+{L:"胡天八月即飞雪",F:"北风卷地白草折，胡天八月即飞雪。忽如一夜春风来，千树万树梨花开。",T:"白雪歌送武判官归京",A:"岑参",E:"By the eighth month the northern sky already sends down snow.",N:"写边地入冬之早、气候之寒，为下文咏雪奇观蓄势。"},
+{L:"千里冰封，万里雪飘",F:"北国风光，千里冰封，万里雪飘。望长城内外，惟余莽莽；大河上下，顿失滔滔。……",T:"沁园春·雪",A:"毛泽东",E:"A thousand leagues of ice seal the land, ten thousand leagues of drifting snow.",N:"毛泽东咏北国雪景的宏阔开篇，气势磅礴，格局远大。"},
+{L:"雪拥蓝关马不前",F:"一封朝奏九重天，夕贬潮阳路八千。欲为圣明除弊事，肯将衰朽惜残年。云横秦岭家何在，雪拥蓝关马不前。知汝远来应有意，好收吾骨瘴江边。",T:"左迁至蓝关示侄孙湘",A:"韩愈",E:"Snow blocks the Lan Pass and my horse cannot go on.",N:"韩愈谏迎佛骨被贬途中所作，雪拥蓝关，写尽忠而被贬的悲愤。"},
+{L:"晚来天欲雪",F:"绿蚁新醅酒，红泥小火炉。晚来天欲雪，能饮一杯无？",T:"问刘十九",A:"白居易",E:"At dusk the sky threatens snow.",N:"白居易邀友，晚来欲雪，红炉温酒，温馨惬意。"},
+{L:"更喜岷山千里雪",F:"……更喜岷山千里雪，三军过后尽开颜。",T:"七律·长征",A:"毛泽东",E:"All the more I love the thousand-li snow of the Min Mountains.",N:"毛泽东长征诗，岷山千里雪，三军过后尽开颜，豪迈乐观。"},
+{L:"遥知不是雪，为有暗香来",F:"墙角数枝梅，凌寒独自开。遥知不是雪，为有暗香来。",T:"梅花",A:"王安石",E:"I know from afar it is not snow, for a faint fragrance comes.",N:"王安石咏梅，遥知不是雪，暗香袭来。"}]},
+{ch:"春",en:"Spring",poems:[
+{L:"春眠不觉晓",F:"春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。",T:"春晓",A:"孟浩然",E:"In spring I sleep past the dawn unaware.",N:"孟浩然惜春名篇，语浅情深，写尽春晨的慵懒与美好。"},
+{L:"春城无处不飞花",F:"春城无处不飞花，寒食东风御柳斜。日暮汉宫传蜡烛，轻烟散入五侯家。",T:"寒食",A:"韩翃",E:"Petals drift through the spring city with nowhere to rest.",N:"寒食节名句，「飞花令」即由此而来，写长安春日飞花胜景。"},
+{L:"春来江水绿如蓝",F:"江南好，风景旧曾谙。日出江花红胜火，春来江水绿如蓝。能不忆江南？",T:"忆江南",A:"白居易",E:"When spring comes, the river runs greener than indigo.",N:"白居易忆江南名句，以「绿如蓝」写江南春水的明丽动人。"},
+{L:"春风又绿江南岸",F:"京口瓜洲一水间，钟山只隔数重山。春风又绿江南岸，明月何时照我还。",T:"泊船瓜洲",A:"王安石",E:"Spring wind again greens the southern shore.",N:"「绿」字炼字精妙，写春风化景，思乡情切。"},
+{L:"春色满园关不住",F:"应怜屐齿印苍苔，小扣柴扉久不开。春色满园关不住，一枝红杏出墙来。",T:"游园不值",A:"叶绍翁",E:"The garden's spring cannot be shut within its walls.",N:"写春色盎然不可阻遏，「一枝红杏出墙来」已成千古名句。"},
+{L:"春江水暖鸭先知",F:"竹外桃花三两枝，春江水暖鸭先知。蒌蒿满地芦芽短，正是河豚欲上时。",T:"惠崇春江晚景",A:"苏轼",E:"The duck first knows when spring has warmed the river.",N:"苏轼题画诗，以鸭之先觉写春回大地，蕴含实践出真知的哲理。"},
+{L:"等闲识得东风面，万紫千红总是春",F:"胜日寻芳泗水滨，无边光景一时新。等闲识得东风面，万紫千红总是春。",T:"春日",A:"朱熹",E:"Easily I know the east wind's face—a thousand purples and reds are all spring.",N:"朱熹借春景写求道境界，「万紫千红总是春」喻万物焕发。"},
+{L:"春蚕到死丝方尽",F:"相见时难别亦难，东风无力百花残。春蚕到死丝方尽，蜡炬成灰泪始干。……",T:"无题",A:"李商隐",E:"The spring silkworm spins silk till its death.",N:"李商隐以春蚕、蜡炬喻至死不渝的深情，「丝」谐「思」，千古绝唱。"},
+{L:"谁言寸草心，报得三春晖",F:"慈母手中线，游子身上衣。临行密密缝，意恐迟迟归。谁言寸草心，报得三春晖。",T:"游子吟",A:"孟郊",E:"How can a blade of grass repay the sun of three spring months?",N:"孟郊颂母恩的千古名篇，以寸草、春晖喻母爱之伟大难报。"},
+{L:"春花秋月何时了",F:"春花秋月何时了？往事知多少。小楼昨夜又东风，故国不堪回首月明中。……",T:"虞美人",A:"李煜",E:"When will spring flowers and autumn moons come to an end?",N:"李煜亡国后的绝命词，以春花秋月反衬无尽愁思，凄恻动人。"},
+{L:"春宵一刻值千金",F:"春宵一刻值千金，花有清香月有阴。歌管楼台声细细，秋千院落夜沉沉。",T:"春宵",A:"苏轼",E:"A moment of spring night is worth a thousand pieces of gold.",N:"苏轼写春夜之珍贵，后人常以此句形容良辰美景之难得。"},
+{L:"春潮带雨晚来急",F:"独怜幽草涧边生，上有黄鹂深树鸣。春潮带雨晚来急，野渡无人舟自横。",T:"滁州西涧",A:"韦应物",E:"The spring tide swells with rain, urgent at dusk.",N:"韦应物写滁州西涧幽景，「野渡无人舟自横」写尽闲淡自然之趣。"},
+{L:"春风得意马蹄疾",F:"昔日龌龊不足夸，今朝放荡思无涯。春风得意马蹄疾，一日看尽长安花。",T:"登科后",A:"孟郊",E:"The spring breeze cheers me; my horse gallops fast.",N:"孟郊中举后作，春风得意，遂成成语。"},
+{L:"春色恼人眠不得",F:"金炉香烬漏声残，剪剪轻风阵阵寒。春色恼人眠不得，月移花影上栏杆。",T:"春夜",A:"王安石",E:"The spring scene keeps me from sleep.",N:"王安石写春夜，春色恼人，花影上栏。"},
+{L:"流水落花春去也",F:"帘外雨潺潺，春意阑珊。……流水落花春去也，天上人间。",T:"浪淘沙令",A:"李煜",E:"Flowing water and fallen flowers—spring is gone.",N:"李煜亡国绝笔，流水落花春去，凄婉绝望。"}]},
+{ch:"秋",en:"Autumn",poems:[
+{L:"自古逢秋悲寂寥",F:"自古逢秋悲寂寥，我言秋日胜春朝。晴空一鹤排云上，便引诗情到碧霄。",T:"秋词",A:"刘禹锡",E:"Since old times autumn has stirred lonely grief.",N:"刘禹锡一反悲秋传统，豪言秋日胜春，胸襟开阔。"},
+{L:"我言秋日胜春朝",F:"自古逢秋悲寂寥，我言秋日胜春朝。晴空一鹤排云上，便引诗情到碧霄。",T:"秋词",A:"刘禹锡",E:"I say the autumn day outshines the spring morning.",N:"以昂扬笔调写秋，一扫悲秋旧调，别开生面。"},
+{L:"秋风萧瑟，洪波涌起",F:"东临碣石，以观沧海。水何澹澹，山岛竦峙。树木丛生，百草丰茂。秋风萧瑟，洪波涌起。日月之行，若出其中；星汉灿烂，若出其里。……",T:"观沧海",A:"曹操",E:"The autumn wind blows bleak; great waves surge up.",N:"曹操北征乌桓登碣石所作，秋风洪波之中见吞吐宇宙的雄浑气魄。"},
+{L:"春花秋月何时了",F:"春花秋月何时了？往事知多少。小楼昨夜又东风，故国不堪回首月明中。……",T:"虞美人",A:"李煜",E:"When will spring flowers and autumn moons come to an end?",N:"李煜亡国绝命词，秋月春花反衬亡国之痛。"},
+{L:"银烛秋光冷画屏",F:"银烛秋光冷画屏，轻罗小扇扑流萤。天阶夜色凉如水，卧看牵牛织女星。",T:"秋夕",A:"杜牧",E:"Silver candlelight cools the painted screen in autumn.",N:"杜牧写宫中秋夜，烛光流萤、凉夜看星，含蓄蕴藉。"},
+{L:"春种一粒粟，秋收万颗子",F:"春种一粒粟，秋收万颗子。四海无闲田，农夫犹饿死。",T:"悯农",A:"李绅",E:"Plant one grain in spring, reap ten thousand in autumn.",N:"李绅悯农名篇，以丰收反衬农夫之困，直刺时弊。"},
+{L:"八月秋高风怒号",F:"八月秋高风怒号，卷我屋上三重茅。……安得广厦千万间，大庇天下寒士俱欢颜！",T:"茅屋为秋风所破歌",A:"杜甫",E:"In the eighth month the high autumn wind howls in fury.",N:"杜甫秋风破屋之作，由己及人，发出「大庇天下寒士」的宏愿。"},
+{L:"万里悲秋常作客",F:"风急天高猿啸哀，渚清沙白鸟飞回。无边落木萧萧下，不尽长江滚滚来。万里悲秋常作客，百年多病独登台。……",T:"登高",A:"杜甫",E:"A thousand miles of sad autumn, ever a stranger.",N:"杜甫漂泊悲秋之叹，身世之感与家国之思交织。"},
+{L:"空山新雨后，天气晚来秋",F:"空山新雨后，天气晚来秋。明月松间照，清泉石上流。竹喧归浣女，莲动下渔舟。随意春芳歇，王孙自可留。",T:"山居秋暝",A:"王维",E:"After fresh rain in the empty hills, evening brings autumn air.",N:"王维写秋日山居的清新幽美，明月清泉，禅意盎然。"},
+{L:"湖光秋月两相和",F:"湖光秋月两相和，潭面无风镜未磨。遥望洞庭山水翠，白银盘里一青螺。",T:"望洞庭",A:"刘禹锡",E:"Lake light and autumn moon blend into one.",N:"刘禹锡写洞庭秋月，以「白银盘里一青螺」喻君山，比喻绝妙。"},
+{L:"塞下秋来风景异",F:"塞下秋来风景异，衡阳雁去无留意。四面边声连角起，千嶂里，长烟落日孤城闭。……",T:"渔家傲·秋思",A:"范仲淹",E:"Autumn at the frontier brings a scene unlike any other.",N:"范仲淹写边塞秋景，苍凉悲壮，开豪放词先声。"},
+{L:"秋阴不散霜飞晚",F:"竹坞无尘水槛清，相思迢递隔重城。秋阴不散霜飞晚，留得枯荷听雨声。",T:"宿骆氏亭寄怀崔雍崔衮",A:"李商隐",E:"Autumn clouds linger, the frost comes late.",N:"李商隐怀人寄友之作，「留得枯荷听雨声」道尽寂寥中的诗意。"},
+{L:"秋风吹不尽，总是玉关情",F:"长安一片月，万户捣衣声。秋风吹不尽，总是玉关情。……",T:"子夜吴歌",A:"李白",E:"The autumn wind blows endlessly, always a longing for the pass.",N:"李白写思妇，秋风吹不尽玉关情，情意绵长。"},
+{L:"秋月春风等闲度",F:"今年欢笑复明年，秋月春风等闲度。弟走从军阿姨死，暮去朝来颜色故。……",T:"琵琶行",A:"白居易",E:"Autumn moons and spring winds pass idly by.",N:"白居易琵琶行，岁月蹉跎之叹。"},
+{L:"秋水共长天一色",F:"落霞与孤鹜齐飞，秋水共长天一色。渔舟唱晚，响穷彭蠡之滨。……",T:"滕王阁序",A:"王勃",E:"Autumn waters merge with the vast sky.",N:"王勃骈文名句，秋景壮美，对仗精绝。"}]},
+{ch:"酒",en:"Wine",poems:[
+{L:"葡萄美酒夜光杯",F:"葡萄美酒夜光杯，欲饮琵琶马上催。醉卧沙场君莫笑，古来征战几人回。",T:"凉州词",A:"王翰",E:"Fine wine in a glowing cup of jade at night.",N:"王翰边塞名篇，写将士纵酒豪饮，豪迈之中透出战争的悲凉。"},
+{L:"劝君更尽一杯酒",F:"渭城朝雨浥轻尘，客舍青青柳色新。劝君更尽一杯酒，西出阳关无故人。",T:"送元二使安西",A:"王维",E:"I urge you to drink one more cup of wine.",N:"王维送别名篇，以酒饯行，西出阳关更无故人，不舍之情尽在其中。"},
+{L:"花间一壶酒",F:"花间一壶酒，独酌无相亲。举杯邀明月，对影成三人。……",T:"月下独酌",A:"李白",E:"A jug of wine among the flowers.",N:"李白月下独酌，邀明月、身影作伴，浪漫而旷达。"},
+{L:"借问酒家何处有",F:"清明时节雨纷纷，路上行人欲断魂。借问酒家何处有？牧童遥指杏花村。",T:"清明",A:"杜牧",E:"I ask where a tavern can be found.",N:"杜牧清明名篇，雨中问酒，牧童遥指，余韵悠长。"},
+{L:"酒入愁肠，化作相思泪",F:"碧云天，黄叶地，秋色连波，波上寒烟翠。……酒入愁肠，化作相思泪。",T:"苏幕遮",A:"范仲淹",E:"Wine into a sorrowing heart turns to tears of longing.",N:"范仲淹写羁旅乡愁，酒入愁肠化作相思泪，真挚感人。"},
+{L:"对酒当歌",F:"对酒当歌，人生几何！譬如朝露，去日苦多。……",T:"短歌行",A:"曹操",E:"Facing wine, I sing a song.",N:"曹操求贤之作，对酒当歌，感叹人生短暂，志在招纳天下英才。"},
+{L:"金樽清酒斗十千",F:"金樽清酒斗十千，玉盘珍羞直万钱。停杯投箸不能食，拔剑四顾心茫然。……",T:"行路难",A:"李白",E:"Fine wine in a golden cup costs ten thousand a dou.",N:"李白以美酒珍馐反衬仕途失意的苦闷，豪放中见沉郁。"},
+{L:"一曲新词酒一杯",F:"一曲新词酒一杯，去年天气旧亭台。夕阳西下几时回？无可奈何花落去，似曾相识燕归来。……",T:"浣溪沙",A:"晏殊",E:"A cup of wine to each new song.",N:"晏殊以酒伴词，感怀时光流逝，婉约含蓄。"},
+{L:"把酒问青天",F:"明月几时有？把酒问青天。不知天上宫阙，今夕是何年。……",T:"水调歌头",A:"苏轼",E:"Raising my cup, I ask the blue sky.",N:"苏轼中秋词开篇，把酒问天，豪放旷达，千古传诵。"},
+{L:"绿蚁新醅酒",F:"绿蚁新醅酒，红泥小火炉。晚来天欲雪，能饮一杯无？",T:"问刘十九",A:"白居易",E:"The newly brewed wine has green bubbles floating.",N:"白居易邀友小酌，新酒红炉，晚来欲雪，温馨而亲切。"},
+{L:"今朝有酒今朝醉",F:"得即高歌失即休，多愁多恨亦悠悠。今朝有酒今朝醉，明日愁来明日愁。",T:"自遣",A:"罗隐",E:"With wine today, be drunk today.",N:"罗隐自遣之作，看似放达，实则透出世事无奈的况味。"},
+{L:"酒逢知己千杯少",F:"酒逢知己千杯少，话不投机半句多。",T:"谚语",A:"佚名",E:"With a true friend, a thousand cups are still too few.",N:"民间谚语，写知己相逢、相谈甚欢的快意。"},
+{L:"浊酒一杯家万里",F:"塞下秋来风景异，衡阳雁去无留意。……浊酒一杯家万里，燕然未勒归无计。……",T:"渔家傲·秋思",A:"范仲淹",E:"A cup of cheap wine, home ten thousand miles away.",N:"范仲淹边塞思乡，浊酒家万里，壮志未酬。"},
+{L:"呼儿将出换美酒",F:"……五花马，千金裘，呼儿将出换美酒，与尔同销万古愁。",T:"将进酒",A:"李白",E:"Call the boy to trade them for fine wine.",N:"李白将进酒结句，一掷千金换美酒，豪情万丈。"},
+{L:"新丰美酒斗十千",F:"新丰美酒斗十千，咸阳游侠多少年。相逢意气为君饮，系马高楼垂柳边。",T:"少年行",A:"王维",E:"New-feng wine costs ten thousand a dou.",N:"王维写游侠少年，美酒豪饮，意气风发。"}]},
+{ch:"山",en:"Mountain",poems:[
+{L:"会当凌绝顶，一览众山小",F:"岱宗夫如何？齐鲁青未了。造化钟神秀，阴阳割昏晓。荡胸生曾云，决眦入归鸟。会当凌绝顶，一览众山小。",T:"望岳",A:"杜甫",E:"I will climb to the summit and see all mountains dwarfed.",N:"杜甫望岳名句，豪情壮志，激励后人攀登人生高峰。"},
+{L:"山重水复疑无路",F:"莫笑农家腊酒浑，丰年留客足鸡豚。山重水复疑无路，柳暗花明又一村。……",T:"游山西村",A:"陆游",E:"Beyond hills and streams I fear there is no road.",N:"陆游名句，山重水复之间柳暗花明，喻困境之中忽现转机。"},
+{L:"采菊东篱下，悠然见南山",F:"结庐在人境，而无车马喧。问君何能尔？心远地自偏。采菊东篱下，悠然见南山。……",T:"饮酒·其五",A:"陶渊明",E:"Picking chrysanthemums by the east hedge, I gaze at the southern hills.",N:"陶渊明田园诗代表，闲适超脱，是隐逸境界的千古典范。"},
+{L:"千山鸟飞绝",F:"千山鸟飞绝，万径人踪灭。孤舟蓑笠翁，独钓寒江雪。",T:"江雪",A:"柳宗元",E:"Across a thousand mountains no bird flies.",N:"柳宗元写孤寂，千山万径俱寂，独钓寒江，孤高绝俗。"},
+{L:"白日依山尽",F:"白日依山尽，黄河入海流。欲穷千里目，更上一层楼。",T:"登鹳雀楼",A:"王之涣",E:"The white sun sets behind the mountains.",N:"王之涣登楼名篇，视野开阔，催人向上进取。"},
+{L:"国破山河在",F:"国破山河在，城春草木深。感时花溅泪，恨别鸟惊心。……",T:"春望",A:"杜甫",E:"The nation is broken, yet mountains and rivers remain.",N:"杜甫忧国名句，山河依旧而国事全非，沉痛深挚。"},
+{L:"轻舟已过万重山",F:"朝辞白帝彩云间，千里江陵一日还。两岸猿声啼不住，轻舟已过万重山。",T:"早发白帝城",A:"李白",E:"My light boat has passed ten thousand mountains.",N:"李白遇赦东归所作，轻舟飞驰，心情轻快，千古传诵。"},
+{L:"山色空蒙雨亦奇",F:"水光潋滟晴方好，山色空蒙雨亦奇。欲把西湖比西子，淡妆浓抹总相宜。",T:"饮湖上初晴后雨",A:"苏轼",E:"In misty rain the hills are equally lovely.",N:"苏轼写西湖晴雨皆美，「淡妆浓抹总相宜」遂成西湖定评。"},
+{L:"不识庐山真面目",F:"横看成岭侧成峰，远近高低各不同。不识庐山真面目，只缘身在此山中。",T:"题西林壁",A:"苏轼",E:"I cannot tell the true face of Mount Lu.",N:"苏轼哲理诗，「当局者迷」的人生哲理尽在其中。"},
+{L:"空山不见人",F:"空山不见人，但闻人语响。返景入深林，复照青苔上。",T:"鹿柴",A:"王维",E:"In the empty hills I see no one.",N:"王维以声衬静，写空山幽寂，禅意深远。"},
+{L:"青山遮不住",F:"郁孤台下清江水，中间多少行人泪。西北望长安，可怜无数山。青山遮不住，毕竟东流去。……",T:"菩萨蛮",A:"辛弃疾",E:"Green mountains cannot block the eastward flow.",N:"辛弃疾词，青山遮不住东流水，喻历史潮流不可阻挡。"},
+{L:"两岸青山相对出",F:"天门中断楚江开，碧水东流至此回。两岸青山相对出，孤帆一片日边来。",T:"望天门山",A:"李白",E:"Green peaks rise on either bank.",N:"李白写天门山雄奇，青山对峙，孤帆日边，气象万千。"},
+{L:"山不在高，有仙则名",F:"山不在高，有仙则名。水不在深，有龙则灵。……",T:"陋室铭",A:"刘禹锡",E:"A mountain needs no height if immortals dwell there.",N:"刘禹锡陋室铭开篇，立意高远，超然物外。"},
+{L:"远上寒山石径斜",F:"远上寒山石径斜，白云生处有人家。停车坐爱枫林晚，霜叶红于二月花。",T:"山行",A:"杜牧",E:"A stone path winds up the cold mountain.",N:"杜牧写秋山，寒山石径，枫叶胜花。"},
+{L:"山光悦鸟性",F:"清晨入古寺，初日照高林。竹径通幽处，禅房花木深。山光悦鸟性，潭影空人心。……",T:"题破山寺后禅院",A:"常建",E:"The mountain glow delights the birds.",N:"常建写古寺，山光潭影，禅意悠远。"}]},
+{ch:"水",en:"Water",poems:[
+{L:"桃花潭水深千尺",F:"李白乘舟将欲行，忽闻岸上踏歌声。桃花潭水深千尺，不及汪伦送我情。",T:"赠汪伦",A:"李白",E:"The water of Peach Blossom Pool is a thousand feet deep.",N:"李白赠友，以潭水之深衬友情之厚，真挚动人。"},
+{L:"山重水复疑无路",F:"莫笑农家腊酒浑，丰年留客足鸡豚。山重水复疑无路，柳暗花明又一村。……",T:"游山西村",A:"陆游",E:"Beyond hills and streams I fear there is no road.",N:"陆游名句，山重水复间柳暗花明，喻困境中现转机。"},
+{L:"抽刀断水水更流",F:"抽刀断水水更流，举杯销愁愁更愁。人生在世不称意，明朝散发弄扁舟。",T:"宣州谢朓楼饯别校书叔云",A:"李白",E:"I draw my sword to cut the stream—still it flows on.",N:"李白以抽刀断水喻愁之难解，豪放而沉郁。"},
+{L:"春来江水绿如蓝",F:"江南好，风景旧曾谙。日出江花红胜火，春来江水绿如蓝。能不忆江南？",T:"忆江南",A:"白居易",E:"When spring comes, the river runs greener than indigo.",N:"白居易忆江南名句，写江南春水的明丽动人。"},
+{L:"滚滚长江东逝水",F:"滚滚长江东逝水，浪花淘尽英雄。是非成败转头空。青山依旧在，几度夕阳红。……",T:"临江仙",A:"杨慎",E:"The rolling Yangtze flows ever eastward.",N:"杨慎词，大江东去淘尽英雄，感慨历史沧桑，被用作《三国演义》开篇。"},
+{L:"碧水东流至此回",F:"天门中断楚江开，碧水东流至此回。两岸青山相对出，孤帆一片日边来。",T:"望天门山",A:"李白",E:"The green water flows east and whirls back here.",N:"李白写天门山江流回旋的壮景，气势雄浑。"},
+{L:"春江水暖鸭先知",F:"竹外桃花三两枝，春江水暖鸭先知。蒌蒿满地芦芽短，正是河豚欲上时。",T:"惠崇春江晚景",A:"苏轼",E:"The duck first knows when spring has warmed the river.",N:"苏轼题画诗，以鸭之先觉写春回大地，蕴含实践出真知的哲理。"},
+{L:"水光潋滟晴方好",F:"水光潋滟晴方好，山色空蒙雨亦奇。欲把西湖比西子，淡妆浓抹总相宜。",T:"饮湖上初晴后雨",A:"苏轼",E:"The rippling water shines bright in fine weather.",N:"苏轼写西湖晴雨皆美，遂成西湖的千古定评。"},
+{L:"为有源头活水来",F:"半亩方塘一鉴开，天光云影共徘徊。问渠那得清如许？为有源头活水来。",T:"观书有感",A:"朱熹",E:"Because from the source fresh water flows.",N:"朱熹以活水喻读书求知，源远才能流清，蕴含哲理。"},
+{L:"一江春水向东流",F:"春花秋月何时了？往事知多少。……问君能有几多愁？恰似一江春水向东流。",T:"虞美人",A:"李煜",E:"A river of spring water flows eastward.",N:"李煜以春水喻愁，绵延无尽，遂成千古绝唱。"},
+{L:"水村山郭酒旗风",F:"千里莺啼绿映红，水村山郭酒旗风。南朝四百八十寺，多少楼台烟雨中。",T:"江南春",A:"杜牧",E:"By the stream villages, wine banners flutter in the wind.",N:"杜牧写江南春景，水村山郭，酒旗飘展，明丽如画。"},
+{L:"落霞与孤鹜齐飞，秋水共长天一色",F:"落霞与孤鹜齐飞，秋水共长天一色。渔舟唱晚，响穷彭蠡之滨……",T:"滕王阁序",A:"王勃",E:"Sunset clouds and a lone duck fly together; autumn waters merge with the sky.",N:"王勃骈文名句，秋景壮美，对仗精绝，千古传诵。"},
+{L:"水不在深，有龙则灵",F:"山不在高，有仙则名。水不在深，有龙则灵。……",T:"陋室铭",A:"刘禹锡",E:"Water needs no depth if dragons dwell there.",N:"刘禹锡陋室铭，以山水喻德，立意超然。"},
+{L:"水流心不竞",F:"坦腹江亭暖，长吟野望时。水流心不竞，云在意俱迟。……",T:"江亭",A:"杜甫",E:"The water flows; my heart does not race.",N:"杜甫写江亭闲适，水流心不竞，淡泊宁静。"},
+{L:"遥望洞庭山水翠",F:"湖光秋月两相和，潭面无风镜未磨。遥望洞庭山水翠，白银盘里一青螺。",T:"望洞庭",A:"刘禹锡",E:"The Dongting hills and waters glow emerald.",N:"刘禹锡望洞庭，山水翠色，青螺之喻绝妙。"}]},
+{ch:"云",en:"Cloud",poems:[
+{L:"黄河远上白云间",F:"黄河远上白云间，一片孤城万仞山。羌笛何须怨杨柳，春风不度玉门关。",T:"凉州词",A:"王之涣",E:"The Yellow River rises far into the white clouds.",N:"王之涣写边塞，黄河远上、孤城万仞，意境苍茫雄浑。"},
+{L:"白云生处有人家",F:"远上寒山石径斜，白云生处有人家。停车坐爱枫林晚，霜叶红于二月花。",T:"山行",A:"杜牧",E:"Where white clouds rise, there is a home.",N:"杜牧写秋山，白云深处有人家，霜叶红于二月花。"},
+{L:"黑云压城城欲摧",F:"黑云压城城欲摧，甲光向日金鳞开。角声满天秋色里，塞上燕脂凝夜紫。……",T:"雁门太守行",A:"李贺",E:"Black clouds press down as if to crush the city.",N:"李贺以黑云压城写战事之紧张，想象奇崛，瑰丽惊人。"},
+{L:"只在此山中，云深不知处",F:"松下问童子，言师采药去。只在此山中，云深不知处。",T:"寻隐者不遇",A:"贾岛",E:"He is in these hills, but deep in clouds none knows where.",N:"贾岛寻隐者不遇，云深不知处，留白悠远，耐人寻味。"},
+{L:"直挂云帆济沧海",F:"行路难，行路难，多歧路，今安在？长风破浪会有时，直挂云帆济沧海。",T:"行路难",A:"李白",E:"Hoist my cloud-sail and cross the vast sea.",N:"李白以云帆济海喻壮志终酬，豪情万丈。"},
+{L:"朝辞白帝彩云间",F:"朝辞白帝彩云间，千里江陵一日还。两岸猿声啼不住，轻舟已过万重山。",T:"早发白帝城",A:"李白",E:"At dawn I leave Baidi among the rosy clouds.",N:"李白写晨辞白帝，彩云相伴，轻快明丽。"},
+{L:"孤云独去闲",F:"众鸟高飞尽，孤云独去闲。相看两不厌，只有敬亭山。",T:"独坐敬亭山",A:"李白",E:"A lone cloud drifts idly away.",N:"李白写独坐之闲，孤云独去，人与山相看不厌。"},
+{L:"野径云俱黑",F:"好雨知时节，当春乃发生。随风潜入夜，润物细无声。野径云俱黑，江船火独明。……",T:"春夜喜雨",A:"杜甫",E:"The field path and the clouds alike are dark.",N:"杜甫写春雨之夜，云黑火明，衬托出春雨的静谧。"},
+{L:"行到水穷处，坐看云起时",F:"中岁颇好道，晚家南山陲。兴来每独往，胜事空自知。行到水穷处，坐看云起时。……",T:"终南别业",A:"王维",E:"I walk to where the stream ends, and sit to watch clouds rise.",N:"王维禅意名句，随遇而安，云起水穷皆是人生境界。"},
+{L:"不畏浮云遮望眼",F:"飞来山上千寻塔，闻说鸡鸣见日升。不畏浮云遮望眼，自缘身在最高层。",T:"登飞来峰",A:"王安石",E:"I fear not the clouds that veil my sight.",N:"王安石登高之作，志存高远，不畏浮云遮蔽。"},
+{L:"白云千载空悠悠",F:"昔人已乘黄鹤去，此地空余黄鹤楼。黄鹤一去不复返，白云千载空悠悠。……",T:"黄鹤楼",A:"崔颢",E:"White clouds drift for a thousand years in vain.",N:"崔颢登黄鹤楼，白云千载，怀古思乡，被誉唐人七律之首。"},
+{L:"天光云影共徘徊",F:"半亩方塘一鉴开，天光云影共徘徊。问渠那得清如许？为有源头活水来。",T:"观书有感",A:"朱熹",E:"Sky light and cloud shadows linger together.",N:"朱熹写方塘清澈，天光云影，寓读书明理之意。"}]},
+{ch:"雨",en:"Rain",poems:[
+{L:"好雨知时节",F:"好雨知时节，当春乃发生。随风潜入夜，润物细无声。野径云俱黑，江船火独明。晓看红湿处，花重锦官城。",T:"春夜喜雨",A:"杜甫",E:"The good rain knows its season.",N:"杜甫写春雨的千古名篇，以「知时节」拟人，写尽春雨的善解人意。"},
+{L:"清明时节雨纷纷",F:"清明时节雨纷纷，路上行人欲断魂。借问酒家何处有？牧童遥指杏花村。",T:"清明",A:"杜牧",E:"During Qingming, fine rain falls in abundance.",N:"杜牧清明名篇，纷纷春雨中行人断魂，情景交融。"},
+{L:"山色空蒙雨亦奇",F:"水光潋滟晴方好，山色空蒙雨亦奇。欲把西湖比西子，淡妆浓抹总相宜。",T:"饮湖上初晴后雨",A:"苏轼",E:"In misty rain the hills are equally lovely.",N:"苏轼写西湖雨景，空蒙奇幻，晴雨各有其美。"},
+{L:"天街小雨润如酥",F:"天街小雨润如酥，草色遥看近却无。最是一年春好处，绝胜烟柳满皇都。",T:"早春呈水部张十八员外",A:"韩愈",E:"Light rain on the avenue moistens like butter.",N:"韩愈写早春雨景，「草色遥看近却无」细腻传神。"},
+{L:"渭城朝雨浥轻尘",F:"渭城朝雨浥轻尘，客舍青青柳色新。劝君更尽一杯酒，西出阳关无故人。",T:"送元二使安西",A:"王维",E:"Morning rain in Weicheng settles the light dust.",N:"王维送别诗，朝雨轻尘、柳色新绿，清新中见别情。"},
+{L:"夜来风雨声",F:"春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。",T:"春晓",A:"孟浩然",E:"Through the night came the sound of wind and rain.",N:"孟浩然清新小诗，夜雨催花落，惜春之情淡而有味。"},
+{L:"沾衣欲湿杏花雨",F:"古木阴中系短篷，杖藜扶我过桥东。沾衣欲湿杏花雨，吹面不寒杨柳风。",T:"绝句",A:"志南",E:"Apricot-blossom rain barely wets my clothes.",N:"志南写春日，杏花雨润、杨柳风柔，惬意宜人。"},
+{L:"白雨跳珠乱入船",F:"黑云翻墨未遮山，白雨跳珠乱入船。卷地风来忽吹散，望湖楼下水如天。",T:"六月二十七日望湖楼醉书",A:"苏轼",E:"White rain beats like pearls into the boat.",N:"苏轼写西湖骤雨，白雨跳珠，生动传神。"},
+{L:"一蓑烟雨任平生",F:"莫听穿林打叶声，何妨吟啸且徐行。竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。……",T:"定风波",A:"苏轼",E:"A straw cloak suffices for a life of mist and rain.",N:"苏轼旷达名句，一蓑烟雨任平生，写尽超然的人生境界。"},
+{L:"巴山夜雨涨秋池",F:"君问归期未有期，巴山夜雨涨秋池。何当共剪西窗烛，却话巴山夜雨时。",T:"夜雨寄北",A:"李商隐",E:"Night rain on Mount Ba swells the autumn pool.",N:"李商隐夜雨怀人，巴山夜雨、归期未卜，情意绵绵。"},
+{L:"空山新雨后",F:"空山新雨后，天气晚来秋。明月松间照，清泉石上流。……",T:"山居秋暝",A:"王维",E:"After fresh rain in the empty hills.",N:"王维写雨后空山的清新，明月清泉，禅意盎然。"},
+{L:"山雨欲来风满楼",F:"一上高城万里愁，蒹葭杨柳似汀洲。溪云初起日沉阁，山雨欲来风满楼。……",T:"咸阳城东楼",A:"许浑",E:"Wind fills the tower as the mountain rain draws near.",N:"许浑写城楼远眺，山雨欲来风满楼，常喻局势将变的先兆。"},
+{L:"东边日出西边雨",F:"杨柳青青江水平，闻郎江上唱歌声。东边日出西边雨，道是无晴却有晴。",T:"竹枝词",A:"刘禹锡",E:"Sun in the east, rain in the west.",N:"刘禹锡写江畔情歌，「晴」谐「情」，妙趣横生。"},
+{L:"梧桐更兼细雨",F:"梧桐更兼细雨，到黄昏、点点滴滴。这次第，怎一个愁字了得！",T:"声声慢",A:"李清照",E:"The parasol tree bears the drizzling rain.",N:"李清照写愁，梧桐细雨，点点滴滴，凄清入骨。"},
+{L:"斜风细雨不须归",F:"西塞山前白鹭飞，桃花流水鳜鱼肥。青箬笠，绿蓑衣，斜风细雨不须归。",T:"渔歌子",A:"张志和",E:"In the wind and drizzle, there is no need to return.",N:"张志和写渔隐，斜风细雨，悠然自得。"}]},
+{ch:"夜",en:"Night",poems:[
+{L:"夜来风雨声",F:"春眠不觉晓，处处闻啼鸟。夜来风雨声，花落知多少。",T:"春晓",A:"孟浩然",E:"Through the night came the sound of wind and rain.",N:"孟浩然清新小诗，夜雨催花落，惜春之情淡而有味。"},
+{L:"夜半钟声到客船",F:"月落乌啼霜满天，江枫渔火对愁眠。姑苏城外寒山寺，夜半钟声到客船。",T:"枫桥夜泊",A:"张继",E:"At midnight the temple bell reaches the traveler's boat.",N:"张继羁旅夜泊，夜半钟声，幽寂中见愁思。"},
+{L:"却话巴山夜雨时",F:"君问归期未有期，巴山夜雨涨秋池。何当共剪西窗烛，却话巴山夜雨时。",T:"夜雨寄北",A:"李商隐",E:"And talk of the night rain on Mount Ba.",N:"李商隐夜雨怀人，设想重逢共话今夜的夜雨，情意绵长。"},
+{L:"夜深千帐灯",F:"山一程，水一程，身向榆关那畔行，夜深千帐灯。……",T:"长相思",A:"纳兰性德",E:"Deep in the night, a thousand tents glow with lamps.",N:"纳兰性德写羁旅，夜深千帐灯，苍茫中见乡思。"},
+{L:"昨夜星辰昨夜风",F:"昨夜星辰昨夜风，画楼西畔桂堂东。身无彩凤双飞翼，心有灵犀一点通。……",T:"无题",A:"李商隐",E:"Last night's stars, last night's wind.",N:"李商隐追忆昨夜相会，星辰夜风，含蓄朦胧。"},
+{L:"夜发清溪向三峡",F:"峨眉山月半轮秋，影入平羌江水流。夜发清溪向三峡，思君不见下渝州。",T:"峨眉山月歌",A:"李白",E:"At night I sail from Qingxi toward the Three Gorges.",N:"李白写月夜行舟，思友之情随江水流淌。"},
+{L:"小楼昨夜又东风",F:"春花秋月何时了？往事知多少。小楼昨夜又东风，故国不堪回首月明中。……",T:"虞美人",A:"李煜",E:"Last night the east wind blew again through my small tower.",N:"李煜亡国之叹，东风又起，故国不堪回首。"},
+{L:"随风潜入夜",F:"好雨知时节，当春乃发生。随风潜入夜，润物细无声。……",T:"春夜喜雨",A:"杜甫",E:"It steals in with the wind on a quiet night.",N:"杜甫写春雨轻柔无声，润物细无声，妙笔生花。"},
+{L:"二十四桥明月夜",F:"青山隐隐水迢迢，秋尽江南草未凋。二十四桥明月夜，玉人何处教吹箫。",T:"寄扬州韩绰判官",A:"杜牧",E:"On the bright moonlit night of the Twenty-four Bridges.",N:"杜牧怀念扬州，二十四桥明月夜，旖旎而空灵。"},
+{L:"风雪夜归人",F:"日暮苍山远，天寒白屋贫。柴门闻犬吠，风雪夜归人。",T:"逢雪宿芙蓉山主人",A:"刘长卿",E:"A traveler returns home through wind and snow at night.",N:"刘长卿旅途投宿，风雪犬吠中见贫家的温暖，画面感极强。"},
+{L:"昼出耘田夜绩麻",F:"昼出耘田夜绩麻，村庄儿女各当家。童孙未解供耕织，也傍桑阴学种瓜。",T:"四时田园杂兴",A:"范成大",E:"By day they weed the fields, by night they spin hemp.",N:"范成大写农家昼夜劳作，田园生活朴实而温暖。"},
+{L:"夜阑卧听风吹雨",F:"僵卧孤村不自哀，尚思为国戍轮台。夜阑卧听风吹雨，铁马冰河入梦来。",T:"十一月四日风雨大作",A:"陆游",E:"Late at night I lie listening to wind and rain.",N:"陆游爱国名篇，夜听风雨，铁马冰河入梦，壮志未酬。"}]},
+{ch:"梦",en:"Dream",poems:[
+{L:"夜深忽梦少年事",F:"夜深忽梦少年事，梦啼妆泪红阑干。",T:"琵琶行",A:"白居易",E:"Late at night I dream of my youthful days.",N:"白居易借琵琶女身世自伤，夜深梦少年，感慨浮沉。"},
+{L:"庄生晓梦迷蝴蝶",F:"锦瑟无端五十弦，一弦一柱思华年。庄生晓梦迷蝴蝶，望帝春心托杜鹃。……",T:"锦瑟",A:"李商隐",E:"Zhuangzi at dawn dreamed he was a butterfly.",N:"李商隐用庄周梦蝶典故，写人生如梦的迷惘。"},
+{L:"铁马冰河入梦来",F:"僵卧孤村不自哀，尚思为国戍轮台。夜阑卧听风吹雨，铁马冰河入梦来。",T:"十一月四日风雨大作",A:"陆游",E:"War-horses and icy rivers charge into my dreams.",N:"陆游梦中犹思报国，铁马冰河，壮志激烈。"},
+{L:"人生如梦",F:"大江东去，浪淘尽，千古风流人物。……人生如梦，一尊还酹江月。",T:"念奴娇·赤壁怀古",A:"苏轼",E:"Life is but a dream.",N:"苏轼赤壁怀古，人生如梦，感慨深沉而旷达。"},
+{L:"梦回吹角连营",F:"醉里挑灯看剑，梦回吹角连营。八百里分麾下炙，五十弦翻塞外声。……",T:"破阵子",A:"辛弃疾",E:"In dreams I return to the camp where horns resound.",N:"辛弃疾追忆军旅，梦回连营，壮志与悲凉交织。"},
+{L:"梦里不知身是客",F:"帘外雨潺潺，春意阑珊。罗衾不耐五更寒。梦里不知身是客，一晌贪欢。……",T:"浪淘沙",A:"李煜",E:"In the dream I forgot I was a guest in a strange land.",N:"李煜亡国后作，梦中暂忘身为囚客，醒来倍加凄凉。"},
+{L:"夜来幽梦忽还乡",F:"十年生死两茫茫，不思量，自难忘。……夜来幽梦忽还乡，小轩窗，正梳妆。……",T:"江城子",A:"苏轼",E:"Last night in a quiet dream I returned home.",N:"苏轼悼亡妻之作，梦中还乡相见，情深意切，催人泪下。"},
+{L:"十年一觉扬州梦",F:"落魄江湖载酒行，楚腰纤细掌中轻。十年一觉扬州梦，赢得青楼薄幸名。",T:"遣怀",A:"杜牧",E:"Ten years of Yangzhou life, now one dream.",N:"杜牧追忆扬州放浪岁月，如一场大梦，自嘲而怅惘。"},
+{L:"好梦留人睡",F:"碧云天，黄叶地，秋色连波，波上寒烟翠。……黯乡魂，追旅思，夜夜除非，好梦留人睡。……",T:"苏幕遮",A:"范仲淹",E:"Only pleasant dreams keep one asleep.",N:"范仲淹写乡愁，唯有好梦能暂解羁旅之思。"},
+{L:"梦入芙蓉浦",F:"燎沉香，消溽暑。……五月渔郎相忆否？小楫轻舟，梦入芙蓉浦。",T:"苏幕遮",A:"周邦彦",E:"In dreams I drift into the lotus pond.",N:"周邦彦思乡之作，梦入芙蓉浦，清新而悠远。"},
+{L:"故人入我梦，明我长相忆",F:"死别已吞声，生别常恻恻。……故人入我梦，明我长相忆。……",T:"梦李白二首",A:"杜甫",E:"My old friend enters my dreams, knowing I long for him.",N:"杜甫忧念李白所作，故人入梦，情真意切。"},
+{L:"事如春梦了无痕",F:"东风未肯入东门，走马还寻去岁村。人似秋鸿来有信，事如春梦了无痕。……",T:"正月二十日出郊寻春",A:"苏轼",E:"Events vanish like a spring dream, leaving no trace.",N:"苏轼写往事如春梦无痕，淡泊而通透。"}]},
+{ch:"心",en:"Heart",poems:[
+{L:"谁言寸草心",F:"慈母手中线，游子身上衣。临行密密缝，意恐迟迟归。谁言寸草心，报得三春晖。",T:"游子吟",A:"孟郊",E:"Who says a blade of grass's heart can repay the sun?",N:"孟郊颂母恩，以寸草、春晖喻母爱难报，千古传诵。"},
+{L:"一片冰心在玉壶",F:"寒雨连江夜入吴，平明送客楚山孤。洛阳亲友如相问，一片冰心在玉壶。",T:"芙蓉楼送辛渐",A:"王昌龄",E:"A heart of ice in a jar of jade.",N:"王昌龄以冰心玉壶自喻，表白清廉高洁的品格。"},
+{L:"我寄愁心与明月",F:"杨花落尽子规啼，闻道龙标过五溪。我寄愁心与明月，随风直到夜郎西。",T:"闻王昌龄左迁龙标遥有此寄",A:"李白",E:"I entrust my sorrow to the bright moon.",N:"李白把愁心托付明月，随友远行，情真意切。"},
+{L:"心有灵犀一点通",F:"昨夜星辰昨夜风，画楼西畔桂堂东。身无彩凤双飞翼，心有灵犀一点通。……",T:"无题",A:"李商隐",E:"Our hearts are linked as if by a rhino's magic horn.",N:"李商隐写心意相通，遂成形容默契的经典成语。"},
+{L:"春心莫共花争发",F:"飒飒东风细雨来，芙蓉塘外有轻雷。……春心莫共花争发，一寸相思一寸灰！",T:"无题",A:"李商隐",E:"Let not my spring heart vie with the blooming flowers.",N:"李商隐写相思之苦，春心与花争发，终成灰烬。"},
+{L:"心远地自偏",F:"结庐在人境，而无车马喧。问君何能尔？心远地自偏。……",T:"饮酒·其五",A:"陶渊明",E:"When the heart is far, the place grows remote.",N:"陶渊明写心远自偏，心境超脱则闹市亦如山林。"},
+{L:"留取丹心照汗青",F:"辛苦遭逢起一经，干戈寥落四周星。……人生自古谁无死？留取丹心照汗青。",T:"过零丁洋",A:"文天祥",E:"Keep a loyal heart to shine in history.",N:"文天祥绝命诗，丹心照汗青，气节凛然，千古不朽。"},
+{L:"同心而离居，忧伤以终老",F:"涉江采芙蓉，兰泽多芳草。采之欲遗谁？所思在远道。……同心而离居，忧伤以终老。",T:"古诗十九首",A:"佚名",E:"One in heart yet living apart, I grieve until old age.",N:"古诗写同心离居之悲，忧伤缠绵，感人至深。"},
+{L:"欲将心事付瑶琴",F:"昨夜寒蛩不住鸣。惊回千里梦，已三更。……欲将心事付瑶琴，知音少，弦断有谁听？",T:"小重山",A:"岳飞",E:"I would entrust my heart's troubles to the jade zither.",N:"岳飞写壮志难酬，心事付琴而少知音，沉郁悲凉。"},
+{L:"蜡烛有心还惜别",F:"多情却似总无情，唯觉樽前笑不成。蜡烛有心还惜别，替人垂泪到天明。",T:"赠别",A:"杜牧",E:"Even the candle has a heart and grieves at parting.",N:"杜牧以烛泪拟离人之泪，写别情的缠绵悱恻。"},
+{L:"心似双丝网，中有千千结",F:"数声鶗鴂，又报芳菲歇。……天不老，情难绝。心似双丝网，中有千千结。……",T:"千秋岁",A:"张先",E:"My heart is a web of twin threads with a thousand knots.",N:"张先写情思千结，遂成「心结」的经典意象。"},
+{L:"此心光明，亦复何言",F:"此心光明，亦复何言。",T:"遗言",A:"王阳明",E:"With a heart of light, what more need be said?",N:"王阳明临终遗言，光明磊落，是一生心学的写照。"}]},
+{ch:"人",en:"People",poems:[
+{L:"人生得意须尽欢",F:"人生得意须尽欢，莫使金樽空对月。天生我材必有用，千金散尽还复来。……",T:"将进酒",A:"李白",E:"In life's triumph, drink to the fullest joy.",N:"李白豪放名句，及时行乐，尽显盛唐气象。"},
+{L:"人有悲欢离合",F:"人有悲欢离合，月有阴晴圆缺，此事古难全。但愿人长久，千里共婵娟。",T:"水调歌头",A:"苏轼",E:"Men have grief and joy, parting and reunion.",N:"苏轼以月之圆缺喻人生聚散，旷达通透。"},
+{L:"人面不知何处去",F:"去年今日此门中，人面桃花相映红。人面不知何处去，桃花依旧笑春风。",T:"题都城南庄",A:"崔护",E:"The face is gone—where has it gone?",N:"崔护写物是人非，人面桃花遂成怅惘的经典意象。"},
+{L:"前不见古人，后不见来者",F:"前不见古人，后不见来者。念天地之悠悠，独怆然而涕下。",T:"登幽州台歌",A:"陈子昂",E:"No ancients before me, no successors to come.",N:"陈子昂登台怀古，孤独而悲怆，千古绝唱。"},
+{L:"但愿人长久",F:"人有悲欢离合，月有阴晴圆缺，此事古难全。但愿人长久，千里共婵娟。",T:"水调歌头",A:"苏轼",E:"May we live long and share the moon from afar.",N:"苏轼中秋的美好祝愿，遂成团圆的代名词。"},
+{L:"人生自古谁无死",F:"辛苦遭逢起一经，干戈寥落四周星。……人生自古谁无死？留取丹心照汗青。",T:"过零丁洋",A:"文天祥",E:"Since ancient times, who has not died?",N:"文天祥以死明志，气节凛然，光照千古。"},
+{L:"路人借问遥招手",F:"蓬头稚子学垂纶，侧坐莓苔草映身。路人借问遥招手，怕得鱼惊不应人。",T:"小儿垂钓",A:"胡令能",E:"A passerby asks, but he waves him off from afar.",N:"胡令能写小儿垂钓，怕惊鱼而摆手不应，天真可爱。"},
+{L:"众人皆醉我独醒",F:"举世皆浊我独清，众人皆醉我独醒，是以见放。",T:"渔父",A:"屈原",E:"All are drunk while I alone am sober.",N:"屈原以独醒自喻，清高不屈，遂成千古名句。"},
+{L:"人间四月芳菲尽",F:"人间四月芳菲尽，山寺桃花始盛开。长恨春归无觅处，不知转入此中来。",T:"大林寺桃花",A:"白居易",E:"In the human world, April's flowers have all faded.",N:"白居易写山寺桃花晚开，惊喜于春色犹存。"},
+{L:"人间能得几回闻",F:"锦城丝管日纷纷，半入江风半入云。此曲只应天上有，人间能得几回闻。",T:"赠花卿",A:"杜甫",E:"How often can mortals hear such music?",N:"杜甫盛赞乐曲，此曲只应天上有，妙喻绝伦。"},
+{L:"人闲桂花落",F:"人闲桂花落，夜静春山空。月出惊山鸟，时鸣春涧中。",T:"鸟鸣涧",A:"王维",E:"At leisure I watch cassia blossoms fall.",N:"王维以极静写极动，意境空灵幽寂。"},
+{L:"天下谁人不识君",F:"千里黄云白日曛，北风吹雁雪纷纷。莫愁前路无知己，天下谁人不识君。",T:"别董大",A:"高适",E:"Who in the world does not know you?",N:"高适以豪语宽慰友人，慷慨激越，遂成送别名句。"}]},
+{ch:"天",en:"Sky",poems:[
+{L:"天生我材必有用",F:"人生得意须尽欢，莫使金樽空对月。天生我材必有用，千金散尽还复来。……",T:"将进酒",A:"李白",E:"Heaven gave me talents for a purpose.",N:"李白自信豪迈，遂成激励无数人的千古名句。"},
+{L:"天长地久有时尽",F:"天长地久有时尽，此恨绵绵无绝期。",T:"长恨歌",A:"白居易",E:"Heaven and earth may end, but this grief never will.",N:"白居易《长恨歌》结句，写唐玄宗与杨贵妃的遗恨无穷。"},
+{L:"月落乌啼霜满天",F:"月落乌啼霜满天，江枫渔火对愁眠。姑苏城外寒山寺，夜半钟声到客船。",T:"枫桥夜泊",A:"张继",E:"The moon sets, crows cry, frost fills the sky.",N:"张继羁旅夜泊，月落、乌啼、霜天、钟声，幽寂愁绪。"},
+{L:"疑是银河落九天",F:"日照香炉生紫烟，遥看瀑布挂前川。飞流直下三千尺，疑是银河落九天。",T:"望庐山瀑布",A:"李白",E:"As if the Milky Way were falling from the ninth heaven.",N:"李白以银河喻瀑布，想象奇绝，气势磅礴。"},
+{L:"黄河之水天上来",F:"君不见黄河之水天上来，奔流到海不复回。君不见高堂明镜悲白发，朝如青丝暮成雪。……",T:"将进酒",A:"李白",E:"The Yellow River's waters come from heaven.",N:"李白写黄河奔涌，起笔气势雄浑，千古传诵。"},
+{L:"天阶夜色凉如水",F:"银烛秋光冷画屏，轻罗小扇扑流萤。天阶夜色凉如水，卧看牵牛织女星。",T:"秋夕",A:"杜牧",E:"The palace steps are cool as water at night.",N:"杜牧写宫中秋夜，凉夜看星，含蓄蕴藉。"},
+{L:"天门中断楚江开",F:"天门中断楚江开，碧水东流至此回。两岸青山相对出，孤帆一片日边来。",T:"望天门山",A:"李白",E:"Heaven's Gate splits as the Chu River opens through.",N:"李白写天门山江流之壮，气象雄奇。"},
+{L:"天苍苍，野茫茫",F:"敕勒川，阴山下。天似穹庐，笼盖四野。天苍苍，野茫茫，风吹草低见牛羊。",T:"敕勒歌",A:"佚名",E:"The sky is vast, the wilds boundless.",N:"北朝民歌写草原辽阔，苍茫壮美。"},
+{L:"此曲只应天上有",F:"锦城丝管日纷纷，半入江风半入云。此曲只应天上有，人间能得几回闻。",T:"赠花卿",A:"杜甫",E:"Such music should exist only in heaven.",N:"杜甫盛赞乐曲之妙，妙喻传神。"},
+{L:"天街小雨润如酥",F:"天街小雨润如酥，草色遥看近却无。最是一年春好处，绝胜烟柳满皇都。",T:"早春呈水部张十八员外",A:"韩愈",E:"Light rain on the avenue moistens like butter.",N:"韩愈写早春雨景，草色遥看近却无，细腻入微。"},
+{L:"江天一色无纤尘",F:"春江潮水连海平，海上明月共潮生。……江天一色无纤尘，皎皎空中孤月轮。……",T:"春江花月夜",A:"张若虚",E:"River and sky are one, without a speck of dust.",N:"张若虚写春江月夜，澄澈空明，被誉为「孤篇压全唐」。"},
+{L:"把酒问青天",F:"明月几时有？把酒问青天。不知天上宫阙，今夕是何年。……",T:"水调歌头",A:"苏轼",E:"Raising my cup, I ask the blue sky.",N:"苏轼中秋词开篇，把酒问天，豪放旷达，千古传诵。"}]},
+{ch:"江",en:"River",poems:[
+{L:"唯见长江天际流",F:"故人西辞黄鹤楼，烟花三月下扬州。孤帆远影碧空尽，唯见长江天际流。",T:"黄鹤楼送孟浩然之广陵",A:"李白",E:"Only the Yangtze flows toward the horizon.",N:"李白送别，孤帆远去，唯见江流，怅惘悠远。"},
+{L:"江枫渔火对愁眠",F:"月落乌啼霜满天，江枫渔火对愁眠。姑苏城外寒山寺，夜半钟声到客船。",T:"枫桥夜泊",A:"张继",E:"By the river maples and fishermen's lamps I sleep in sorrow.",N:"张继羁旅夜泊，江枫渔火，愁思难眠。"},
+{L:"半江瑟瑟半江红",F:"一道残阳铺水中，半江瑟瑟半江红。可怜九月初三夜，露似真珠月似弓。",T:"暮江吟",A:"白居易",E:"Half the river is green, half red.",N:"白居易写秋江暮色，残阳铺水，半江红绿相映。"},
+{L:"江船火独明",F:"好雨知时节，当春乃发生。随风潜入夜，润物细无声。野径云俱黑，江船火独明。……",T:"春夜喜雨",A:"杜甫",E:"The river boat's lamp alone glows bright.",N:"杜甫写春雨之夜，云黑火明，衬托出雨夜的静谧。"},
+{L:"江畔何人初见月",F:"春江潮水连海平，海上明月共潮生。……江畔何人初见月？江月何年初照人？……",T:"春江花月夜",A:"张若虚",E:"By the river, who first saw the moon?",N:"张若虚对江月的哲思之问，遂成千古名句。"},
+{L:"大江东去",F:"大江东去，浪淘尽，千古风流人物。故垒西边，人道是，三国周郎赤壁。……",T:"念奴娇·赤壁怀古",A:"苏轼",E:"The great river flows eastward.",N:"苏轼赤壁怀古开篇，大江东去，气象雄浑。"},
+{L:"江清月近人",F:"移舟泊烟渚，日暮客愁新。野旷天低树，江清月近人。",T:"宿建德江",A:"孟浩然",E:"The clear river brings the moon close to me.",N:"孟浩然江夜泊舟，江清月近，慰藉羁旅愁思。"},
+{L:"春江水暖鸭先知",F:"竹外桃花三两枝，春江水暖鸭先知。蒌蒿满地芦芽短，正是河豚欲上时。",T:"惠崇春江晚景",A:"苏轼",E:"The duck first knows when spring has warmed the river.",N:"苏轼题画诗，以鸭之先觉写春回大地，富含哲理。"},
+{L:"一江春水向东流",F:"春花秋月何时了？往事知多少。……问君能有几多愁？恰似一江春水向东流。",T:"虞美人",A:"李煜",E:"A river of spring water flows eastward.",N:"李煜以春水喻愁，绵延无尽，千古绝唱。"},
+{L:"天门中断楚江开",F:"天门中断楚江开，碧水东流至此回。两岸青山相对出，孤帆一片日边来。",T:"望天门山",A:"李白",E:"Heaven's Gate splits as the Chu River opens through.",N:"李白写天门山江流之壮，气象雄奇。"},
+{L:"江流天地外",F:"楚塞三湘接，荆门九派通。江流天地外，山色有无中。……",T:"汉江临眺",A:"王维",E:"The river flows beyond heaven and earth.",N:"王维写汉江壮阔，江流天地外，气势恢宏。"},
+{L:"长江悲已滞",F:"长江悲已滞，万里念将归。况属高风晚，山山黄叶飞。",T:"山中",A:"王勃",E:"The Yangtze seems to linger in sorrow.",N:"王勃羁旅思归之作，江流似悲，秋色萧索。"}]},
+{ch:"柳",en:"Willow",poems:[
+{L:"客舍青青柳色新",F:"渭城朝雨浥轻尘，客舍青青柳色新。劝君更尽一杯酒，西出阳关无故人。",T:"送元二使安西",A:"王维",E:"The inn is green with fresh willows.",N:"王维送别，柳色新绿，以柳寓「留」别之意。"},
+{L:"吹面不寒杨柳风",F:"古木阴中系短篷，杖藜扶我过桥东。沾衣欲湿杏花雨，吹面不寒杨柳风。",T:"绝句",A:"志南",E:"The willow-scented wind is soft, not cold.",N:"志南写春日，杨柳风柔、杏花雨润，惬意宜人。"},
+{L:"无情最是台城柳",F:"江雨霏霏江草齐，六朝如梦鸟空啼。无情最是台城柳，依旧烟笼十里堤。",T:"台城",A:"韦庄",E:"Most heartless are the willows of Taicheng.",N:"韦庄凭吊六朝，台城柳依旧烟笼，写兴亡之叹。"},
+{L:"杨柳依依",F:"昔我往矣，杨柳依依。今我来思，雨雪霏霏。",T:"诗经·采薇",A:"佚名",E:"The willows sway gently.",N:"《诗经》名句，以杨柳依依写离别之情，千古传诵。"},
+{L:"拂堤杨柳醉春烟",F:"草长莺飞二月天，拂堤杨柳醉春烟。儿童散学归来早，忙趁东风放纸鸢。",T:"村居",A:"高鼎",E:"Willows by the dyke drink the spring mist.",N:"高鼎写春景，杨柳拂堤，春烟如醉，生机盎然。"},
+{L:"月上柳梢头",F:"去年元夜时，花市灯如昼。月上柳梢头，人约黄昏后。……",T:"生查子·元夕",A:"欧阳修",E:"The moon climbs above the willow tips.",N:"欧阳修写元宵约会，月柳交织出旖旎夜色。"},
+{L:"两个黄鹂鸣翠柳",F:"两个黄鹂鸣翠柳，一行白鹭上青天。窗含西岭千秋雪，门泊东吴万里船。",T:"绝句",A:"杜甫",E:"Two orioles sing amid the green willows.",N:"杜甫成都草堂诗，翠柳黄鹂，声色明丽。"},
+{L:"柳暗花明又一村",F:"莫笑农家腊酒浑，丰年留客足鸡豚。山重水复疑无路，柳暗花明又一村。……",T:"游山西村",A:"陆游",E:"Willows shade, flowers bright—another village.",N:"陆游名句，柳暗花明间现转机，喻困境中的希望。"},
+{L:"绝胜烟柳满皇都",F:"天街小雨润如酥，草色遥看近却无。最是一年春好处，绝胜烟柳满皇都。",T:"早春呈水部张十八员外",A:"韩愈",E:"Far better than misty willows filling the capital.",N:"韩愈写早春，烟柳满皇都，春色无边。"},
+{L:"羌笛何须怨杨柳",F:"黄河远上白云间，一片孤城万仞山。羌笛何须怨杨柳，春风不度玉门关。",T:"凉州词",A:"王之涣",E:"Why should the flute complain of the willows?",N:"王之涣边塞诗，羌笛怨柳，春风不度，苍凉而悠远。"},
+{L:"杨柳青青江水平",F:"杨柳青青江水平，闻郎江上唱歌声。东边日出西边雨，道是无晴却有晴。",T:"竹枝词",A:"刘禹锡",E:"The willows are green, the river calm.",N:"刘禹锡写江畔情歌，杨柳青青，「晴」谐「情」，妙趣横生。"},
+{L:"寒食东风御柳斜",F:"春城无处不飞花，寒食东风御柳斜。日暮汉宫传蜡烛，轻烟散入五侯家。",T:"寒食",A:"韩翃",E:"The east wind slants the palace willows.",N:"韩翃寒食名句，御柳斜斜，写尽长安春日风光。"}]},
+{ch:"梅",en:"Plum",poems:[
+{L:"墙角数枝梅",F:"墙角数枝梅，凌寒独自开。遥知不是雪，为有暗香来。",T:"梅花",A:"王安石",E:"A few plum branches by the wall corner.",N:"王安石咏梅，墙角寒梅，凌寒独开，暗香浮动。"},
+{L:"折梅逢驿使",F:"折梅逢驿使，寄与陇头人。江南无所有，聊赠一枝春。",T:"赠范晔",A:"陆凯",E:"I broke off a plum branch to greet the courier.",N:"陆凯折梅赠友，聊赠一枝春，情深意切。"},
+{L:"梅须逊雪三分白",F:"梅雪争春未肯降，骚人阁笔费评章。梅须逊雪三分白，雪却输梅一段香。",T:"雪梅",A:"卢梅坡",E:"The plum must yield to snow three parts of whiteness.",N:"梅雪各擅胜场，白与香之辨富含理趣。"},
+{L:"雪却输梅一段香",F:"梅雪争春未肯降，骚人阁笔费评章。梅须逊雪三分白，雪却输梅一段香。",T:"雪梅",A:"卢梅坡",E:"But snow loses to the plum a share of fragrance.",N:"与上句对举，写雪之白与梅之香各有所长。"},
+{L:"寒梅著花未",F:"君自故乡来，应知故乡事。来日绮窗前，寒梅著花未？",T:"杂诗",A:"王维",E:"Has the cold plum blossomed yet?",N:"王维问故乡寒梅，寒暄之中寄寓思乡深情。"},
+{L:"梅子金黄杏子肥",F:"梅子金黄杏子肥，麦花雪白菜花稀。日长篱落无人过，惟有蜻蜓蛱蝶飞。",T:"四时田园杂兴",A:"范成大",E:"Plums are golden, apricots plump.",N:"范成大写初夏田园，梅黄杏肥，充满生活气息。"},
+{L:"黄梅时节家家雨",F:"黄梅时节家家雨，青草池塘处处蛙。有约不来过夜半，闲敲棋子落灯花。",T:"约客",A:"赵师秀",E:"In plum-rain season, every home has rain.",N:"赵师秀写黄梅雨天候客，闲敲棋子，落寞而闲适。"},
+{L:"梅子黄时日日晴",F:"梅子黄时日日晴，小溪泛尽却山行。绿阴不减来时路，添得黄鹂四五声。",T:"三衢道中",A:"曾几",E:"When plums ripen yellow, the days are clear.",N:"曾几写初夏出行，梅子黄时，绿阴黄鹂，清新明快。"},
+{L:"江城五月落梅花",F:"一为迁客去长沙，西望长安不见家。黄鹤楼中吹玉笛，江城五月落梅花。",T:"与史郎中钦听黄鹤楼上吹笛",A:"李白",E:"In the river city, plum blossoms fall in May.",N:"李白闻笛思乡，五月落梅花，笛声凄清动人。"},
+{L:"绕床弄青梅",F:"郎骑竹马来，绕床弄青梅。同居长干里，两小无嫌猜。……",T:"长干行",A:"李白",E:"Around the well we played with green plums.",N:"李白写青梅竹马，两小无猜，纯真美好。"},
+{L:"一树寒梅白玉条",F:"一树寒梅白玉条，迥临村路傍溪桥。不知近水花先发，疑是经冬雪未销。",T:"早梅",A:"张谓",E:"A tree of winter plum, branches white as jade.",N:"张谓写早梅，白玉条般的寒梅临溪而放，疑是残雪。"},
+{L:"梅花香自苦寒来",F:"宝剑锋从磨砺出，梅花香自苦寒来。",T:"警世贤文",A:"佚名",E:"The plum blossom's fragrance comes from bitter cold.",N:"以梅花苦寒得香喻磨砺成才，激励无数人。"}]},
+{ch:"竹",en:"Bamboo",poems:[
+{L:"竹外桃花三两枝",F:"竹外桃花三两枝，春江水暖鸭先知。蒌蒿满地芦芽短，正是河豚欲上时。",T:"惠崇春江晚景",A:"苏轼",E:"A few peach blossoms bloom beyond the bamboo grove.",N:"苏轼题画诗，竹外桃花，早春江景清新如画。"},
+{L:"郎骑竹马来",F:"郎骑竹马来，绕床弄青梅。同居长干里，两小无嫌猜。……",T:"长干行",A:"李白",E:"The boy rode in on a bamboo horse.",N:"李白写青梅竹马，两小无猜，纯真美好。"},
+{L:"竹径通幽处",F:"清晨入古寺，初日照高林。竹径通幽处，禅房花木深。……",T:"题破山寺后禅院",A:"常建",E:"A bamboo path leads to a quiet place.",N:"常建写古寺幽境，竹径通幽，禅意深远。"},
+{L:"竹溪村路板桥斜",F:"雨里鸡鸣一两家，竹溪村路板桥斜。妇姑相唤浴蚕去，闲看中庭栀子花。",T:"雨过山村",A:"王建",E:"The village path by the bamboo stream crosses a plank bridge.",N:"王建写山村雨后，竹溪板桥，恬静安闲。"},
+{L:"竹喧归浣女",F:"空山新雨后，天气晚来秋。明月松间照，清泉石上流。竹喧归浣女，莲动下渔舟。……",T:"山居秋暝",A:"王维",E:"Bamboo rustles as the washerwomen return.",N:"王维写山居，竹喧莲动，动静相生，清幽灵动。"},
+{L:"绿竹猗猗",F:"瞻彼淇奥，绿竹猗猗。有匪君子，如切如磋，如琢如磨。……",T:"诗经·淇奥",A:"佚名",E:"The green bamboo is lush and graceful.",N:"《诗经》以绿竹起兴，喻君子之德，温润如玉。"},
+{L:"竹杖芒鞋轻胜马",F:"莫听穿林打叶声，何妨吟啸且徐行。竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。……",T:"定风波",A:"苏轼",E:"A bamboo staff and straw sandals beat riding a horse.",N:"苏轼写雨中徐行，竹杖芒鞋，旷达洒脱。"},
+{L:"荷风送香气，竹露滴清响",F:"山光忽西落，池月渐东上。散发乘夕凉，开轩卧闲敞。荷风送香气，竹露滴清响。……",T:"夏日南亭怀辛大",A:"孟浩然",E:"Lotus breeze brings fragrance; bamboo dew drips clear.",N:"孟浩然写夏夜纳凉，荷香竹露，清幽宜人。"},
+{L:"斑竹枝",F:"斑竹枝，斑竹枝，泪痕点点寄相思。楚客欲听瑶瑟怨，潇湘深夜月明时。",T:"潇湘神",A:"刘禹锡",E:"Mottled bamboo branches.",N:"刘禹锡写斑竹泪痕，寄寓湘妃的千古相思。"},
+{L:"新竹高于旧竹枝",F:"新竹高于旧竹枝，全凭老干为扶持。下年再有新生者，十丈龙孙绕凤池。",T:"新竹",A:"郑燮",E:"New bamboo grows taller than the old.",N:"郑燮以新竹喻后辈，赞老一辈的扶持之功。"},
+{L:"绿竹入幽径",F:"暮从碧山下，山月随人归。却顾所来径，苍苍横翠微。……绿竹入幽径，青萝拂行衣。……",T:"下终南山过斛斯山人宿置酒",A:"李白",E:"Green bamboo lines the quiet path.",N:"李白写山行，绿竹幽径、青萝拂衣，清幽雅致。"},
+{L:"宁可食无肉，不可居无竹",F:"宁可食无肉，不可居无竹。无肉令人瘦，无竹令人俗。",T:"於潜僧绿筠轩",A:"苏轼",E:"Rather no meat than live without bamboo.",N:"苏轼写竹之高洁，宁可无肉不可无竹，遂成雅士名言。"}]},
+{ch:"楼",en:"Tower",poems:[
+{L:"更上一层楼",F:"白日依山尽，黄河入海流。欲穷千里目，更上一层楼。",T:"登鹳雀楼",A:"王之涣",E:"Climb one more storey to see a thousand miles.",N:"王之涣登楼名句，视野开阔，催人进取。"},
+{L:"危楼高百尺",F:"危楼高百尺，手可摘星辰。不敢高声语，恐惊天上人。",T:"夜宿山寺",A:"李白",E:"The tall tower stands a hundred feet high.",N:"李白以夸张写楼之高，手可摘星，想象奇绝。"},
+{L:"此地空余黄鹤楼",F:"昔人已乘黄鹤去，此地空余黄鹤楼。黄鹤一去不复返，白云千载空悠悠。……",T:"黄鹤楼",A:"崔颢",E:"Only the Yellow Crane Tower remains here.",N:"崔颢登黄鹤楼，人去楼空，怀古思乡，被誉唐人七律之首。"},
+{L:"山雨欲来风满楼",F:"一上高城万里愁，蒹葭杨柳似汀洲。溪云初起日沉阁，山雨欲来风满楼。……",T:"咸阳城东楼",A:"许浑",E:"Wind fills the tower as the mountain rain draws near.",N:"许浑写城楼远眺，山雨欲来风满楼，常喻局势将变。"},
+{L:"月满西楼",F:"红藕香残玉簟秋。轻解罗裳，独上兰舟。云中谁寄锦书来，雁字回时，月满西楼。……",T:"一剪梅",A:"李清照",E:"The full moon fills the western tower.",N:"李清照写相思，雁字回时月满西楼，清丽婉约。"},
+{L:"小楼昨夜又东风",F:"春花秋月何时了？往事知多少。小楼昨夜又东风，故国不堪回首月明中。……",T:"虞美人",A:"李煜",E:"Last night the east wind blew again through my small tower.",N:"李煜亡国之叹，东风又起，故国不堪回首。"},
+{L:"独上高楼，望尽天涯路",F:"昨夜西风凋碧树，独上高楼，望尽天涯路。……",T:"蝶恋花",A:"晏殊",E:"Alone I climb the high tower and gaze to the sky's edge.",N:"晏殊写登高望远，被王国维引为治学第一境界。"},
+{L:"雾失楼台",F:"雾失楼台，月迷津渡。桃源望断无寻处。……",T:"踏莎行",A:"秦观",E:"Fog hides the towers and terraces.",N:"秦观写春夜迷茫，雾失楼台，凄迷婉约。"},
+{L:"楼高不见章台路",F:"庭院深深深几许……玉勒雕鞍游冶处，楼高不见章台路。……",T:"蝶恋花",A:"欧阳修",E:"The tower is so high I cannot see the road below.",N:"欧阳修写闺怨，楼高不见归路，含蓄深沉。"},
+{L:"近水楼台先得月",F:"近水楼台先得月，向阳花木易为春。",T:"断句",A:"苏麟",E:"The waterside tower first catches the moon.",N:"苏麟名句，喻因近而得利，遂成千古成语。"},
+{L:"满眼风光北固楼",F:"何处望神州？满眼风光北固楼。千古兴亡多少事？悠悠。……",T:"南乡子",A:"辛弃疾",E:"The Beigu Tower fills the eye with scenery.",N:"辛弃疾登北固楼，望神州，怀古伤今，豪迈悲壮。"},
+{L:"故人西辞黄鹤楼",F:"故人西辞黄鹤楼，烟花三月下扬州。孤帆远影碧空尽，唯见长江天际流。",T:"黄鹤楼送孟浩然之广陵",A:"李白",E:"My friend departs from the Yellow Crane Tower.",N:"李白送别孟浩然，烟花三月，孤帆远影，情意绵长。"}]},
+{ch:"舟",en:"Boat",poems:[
+{L:"轻舟已过万重山",F:"朝辞白帝彩云间，千里江陵一日还。两岸猿声啼不住，轻舟已过万重山。",T:"早发白帝城",A:"李白",E:"My light boat has passed ten thousand mountains.",N:"李白遇赦东归，轻舟飞驰，心情轻快，千古传诵。"},
+{L:"孤舟蓑笠翁",F:"千山鸟飞绝，万径人踪灭。孤舟蓑笠翁，独钓寒江雪。",T:"江雪",A:"柳宗元",E:"A lone old man in a straw cloak and hat on a lonely boat.",N:"柳宗元写孤舟独钓，孤高绝俗，意境冷寂。"},
+{L:"野渡无人舟自横",F:"独怜幽草涧边生，上有黄鹂深树鸣。春潮带雨晚来急，野渡无人舟自横。",T:"滁州西涧",A:"韦应物",E:"No one at the ferry; the boat drifts crosswise.",N:"韦应物写野渡之闲，无人舟自横，闲淡自然。"},
+{L:"小舟从此逝",F:"夜饮东坡醒复醉，归来仿佛三更。……小舟从此逝，江海寄余生。",T:"临江仙",A:"苏轼",E:"From now on my little boat drifts away.",N:"苏轼写归隐之志，小舟逝去，江海寄余生，旷达超然。"},
+{L:"兴尽晚回舟",F:"常记溪亭日暮，沉醉不知归路。兴尽晚回舟，误入藕花深处。……",T:"如梦令",A:"李清照",E:"At dusk, well pleased, I row my boat back.",N:"李清照写溪亭游赏，兴尽回舟，误入藕花，清新灵动。"},
+{L:"李白乘舟将欲行",F:"李白乘舟将欲行，忽闻岸上踏歌声。桃花潭水深千尺，不及汪伦送我情。",T:"赠汪伦",A:"李白",E:"Li Bai is about to leave by boat.",N:"李白赠别汪伦，踏歌相送，潭水情深，真挚动人。"},
+{L:"移舟泊烟渚",F:"移舟泊烟渚，日暮客愁新。野旷天低树，江清月近人。",T:"宿建德江",A:"孟浩然",E:"I move my boat to anchor by the misty shore.",N:"孟浩然泊舟江渚，日暮客愁，江清月近人。"},
+{L:"忽复乘舟梦日边",F:"闲来垂钓碧溪上，忽复乘舟梦日边。行路难，行路难，多歧路，今安在？……",T:"行路难",A:"李白",E:"Then I dream of sailing past the sun.",N:"李白以乘舟梦日喻得遇明主，豪情与迷茫交织。"},
+{L:"沉舟侧畔千帆过",F:"巴山楚水凄凉地，二十三年弃置身。……沉舟侧畔千帆过，病树前头万木春。……",T:"酬乐天扬州初逢席上见赠",A:"刘禹锡",E:"Past the sunken boat, a thousand sails glide by.",N:"刘禹锡以沉舟病树自喻，又见新机，豁达乐观。"},
+{L:"渔舟唱晚",F:"落霞与孤鹜齐飞，秋水共长天一色。渔舟唱晚，响穷彭蠡之滨。……",T:"滕王阁序",A:"王勃",E:"Fishing boats sing at dusk.",N:"王勃写滕王阁秋景，渔舟唱晚，悠远而华美。"},
+{L:"兰舟催发",F:"都门帐饮无绪，留恋处，兰舟催发。执手相看泪眼，竟无语凝噎。……",T:"雨霖铃",A:"柳永",E:"The orchid boat urges me to set sail.",N:"柳永写离别，兰舟催发，执手泪眼，缠绵悱恻。"},
+{L:"独上兰舟",F:"红藕香残玉簟秋。轻解罗裳，独上兰舟。云中谁寄锦书来……",T:"一剪梅",A:"李清照",E:"Alone I board the orchid boat.",N:"李清照写独上兰舟的孤寂，情思婉转。"}]},
+{ch:"家",en:"Home",poems:[
+{L:"谁家新燕啄春泥",F:"孤山寺北贾亭西，水面初平云脚低。几处早莺争暖树，谁家新燕啄春泥。……",T:"钱塘湖春行",A:"白居易",E:"Whose new swallows peck the spring mud?",N:"白居易写西湖早春，新燕啄泥，生机盎然。"},
+{L:"白云生处有人家",F:"远上寒山石径斜，白云生处有人家。停车坐爱枫林晚，霜叶红于二月花。",T:"山行",A:"杜牧",E:"Where white clouds rise, there is a home.",N:"杜牧写秋山，白云深处有人家，枫叶红于二月花。"},
+{L:"小桥流水人家",F:"枯藤老树昏鸦，小桥流水人家，古道西风瘦马。夕阳西下，断肠人在天涯。",T:"天净沙·秋思",A:"马致远",E:"A small bridge, flowing water, a household.",N:"马致远以意象白描写秋思，被誉为「秋思之祖」。"},
+{L:"家书抵万金",F:"国破山河在，城春草木深。感时花溅泪，恨别鸟惊心。烽火连三月，家书抵万金。……",T:"春望",A:"杜甫",E:"A letter from home is worth ten thousand gold.",N:"杜甫乱世之中，家书抵万金，写尽思亲之切。"},
+{L:"飞入寻常百姓家",F:"朱雀桥边野草花，乌衣巷口夕阳斜。旧时王谢堂前燕，飞入寻常百姓家。",T:"乌衣巷",A:"刘禹锡",E:"Flying into the homes of common folk.",N:"刘禹锡写沧桑之变，王谢燕子飞入百姓家，感慨深沉。"},
+{L:"少小离家老大回",F:"少小离家老大回，乡音无改鬓毛衰。儿童相见不相识，笑问客从何处来。",T:"回乡偶书",A:"贺知章",E:"I left home young and return old.",N:"贺知章写久客归乡，鬓毛已衰，感慨岁月沧桑。"},
+{L:"家祭无忘告乃翁",F:"死去元知万事空，但悲不见九州同。王师北定中原日，家祭无忘告乃翁。",T:"示儿",A:"陆游",E:"At the family rite, don't forget to tell your father.",N:"陆游临终绝笔，念念不忘收复中原，爱国情怀感人至深。"},
+{L:"借问酒家何处有",F:"清明时节雨纷纷，路上行人欲断魂。借问酒家何处有？牧童遥指杏花村。",T:"清明",A:"杜牧",E:"I ask where a tavern can be found.",N:"杜牧清明名篇，雨中问酒，牧童遥指，余韵悠长。"},
+{L:"夜泊秦淮近酒家",F:"烟笼寒水月笼沙，夜泊秦淮近酒家。商女不知亡国恨，隔江犹唱后庭花。",T:"泊秦淮",A:"杜牧",E:"At night I moor by the Qinhuai taverns.",N:"杜牧泊舟秦淮，借商女之歌讽时政，含蓄深沉。"},
+{L:"君家何处住",F:"君家何处住？妾住在横塘。停船暂借问，或恐是同乡。",T:"长干行",A:"崔颢",E:"Where is your home?",N:"崔颢写江上问答，乡音乡情，清新质朴。"},
+{L:"家中有阿谁",F:"十五从军征，八十始得归。道逢乡里人：家中有阿谁？……",T:"十五从军征",A:"佚名",E:"Who is left at home?",N:"汉乐府写老兵还乡，家破人亡的悲凉，令人心酸。"},
+{L:"家住苍烟落照间",F:"家住苍烟落照间，丝毫尘事不相关。斟残玉瀣行穿竹，卷罢黄庭卧看山。……",T:"鹧鸪天",A:"陆游",E:"My home lies amid mist and sunset glow.",N:"陆游写闲居，苍烟落照，超然尘外，淡泊宁静。"}]},
+{ch:"愁",en:"Sorrow",poems:[
+{L:"问君能有几多愁",F:"春花秋月何时了？往事知多少。……问君能有几多愁？恰似一江春水向东流。",T:"虞美人",A:"李煜",E:"How much sorrow can you bear?",N:"李煜亡国之愁，如春水东流，绵延无尽。"},
+{L:"剪不断，理还乱，是离愁",F:"无言独上西楼，月如钩。寂寞梧桐深院锁清秋。剪不断，理还乱，是离愁。……",T:"相见欢",A:"李煜",E:"Cut it, it won't part; sort it, it tangles—parting sorrow.",N:"李煜写离愁，剪不断理还乱，比喻精妙，千古传诵。"},
+{L:"举杯销愁愁更愁",F:"抽刀断水水更流，举杯销愁愁更愁。人生在世不称意，明朝散发弄扁舟。",T:"宣州谢朓楼饯别校书叔云",A:"李白",E:"I raise my cup to drown sorrow, yet sorrow grows.",N:"李白写愁之难解，抽刀断水、举杯销愁，豪放而沉郁。"},
+{L:"少年不识愁滋味",F:"少年不识愁滋味，爱上层楼。爱上层楼，为赋新词强说愁。……",T:"丑奴儿",A:"辛弃疾",E:"In youth I knew nothing of sorrow's taste.",N:"辛弃疾写少年与暮年对愁的不同体悟，含蓄深沉。"},
+{L:"烟波江上使人愁",F:"昔人已乘黄鹤去，此地空余黄鹤楼。……日暮乡关何处是？烟波江上使人愁。",T:"黄鹤楼",A:"崔颢",E:"The misty waves stir sorrow in me.",N:"崔颢登楼思乡，烟波江上使人愁，乡愁无尽。"},
+{L:"江枫渔火对愁眠",F:"月落乌啼霜满天，江枫渔火对愁眠。姑苏城外寒山寺，夜半钟声到客船。",T:"枫桥夜泊",A:"张继",E:"By river maples and lamps I sleep in sorrow.",N:"张继羁旅夜泊，江枫渔火，愁思难眠。"},
+{L:"愁云惨淡万里凝",F:"瀚海阑干百丈冰，愁云惨淡万里凝。中军置酒饮归客，胡琴琵琶与羌笛。……",T:"白雪歌送武判官归京",A:"岑参",E:"Gloomy clouds of sorrow congeal for ten thousand miles.",N:"岑参写塞外苦寒，愁云万里，苍凉悲壮。"},
+{L:"酒入愁肠，化作相思泪",F:"碧云天，黄叶地，秋色连波，波上寒烟翠。……酒入愁肠，化作相思泪。",T:"苏幕遮",A:"范仲淹",E:"Wine into a sorrowing heart turns to tears of longing.",N:"范仲淹写乡愁，酒入愁肠化作相思泪，真挚感人。"},
+{L:"一种相思，两处闲愁",F:"红藕香残玉簟秋。……花自飘零水自流。一种相思，两处闲愁。……",T:"一剪梅",A:"李清照",E:"One longing, two places of idle sorrow.",N:"李清照写两地相思，一种相思两处闲愁，婉约动人。"},
+{L:"白发三千丈，缘愁似个长",F:"白发三千丈，缘愁似个长。不知明镜里，何处得秋霜。",T:"秋浦歌",A:"李白",E:"My white hair stretches three thousand feet—so long is my sorrow.",N:"李白以白发三千丈极写愁之深长，想象奇绝。"},
+{L:"缘愁似个长",F:"白发三千丈，缘愁似个长。不知明镜里，何处得秋霜。",T:"秋浦歌",A:"李白",E:"As long as this sorrow.",N:"以夸张写愁绪之绵长，奇想惊人。"},
+{L:"载不动许多愁",F:"风住尘香花已尽，日晚倦梳头。……只恐双溪舴艋舟，载不动许多愁。",T:"武陵春",A:"李清照",E:"The little boat fears it cannot bear so much sorrow.",N:"李清照写愁之沉重，载不动许多愁，遂成千古名句。"}]}
+];
+
+let cur=null, fav=JSON.parse(localStorage.getItem("feihua_fav")||"[]");
+let lang=localStorage.getItem("feihua_lang")||"zh";
+let theme=localStorage.getItem("feihua_theme")||"light";
+
+const I18N={
+ zh:{subtitle:"一字飞花，满目诗情",ptitle:"选一个令字",phint:"点击上方令字，展开含该字的经典诗句；再点诗句可看完整解读",
+     rand:"随机一句",fav:"我的收藏",pick:"挑一个令字",empty:"—",noFav:"还没有收藏的诗句",favs:"收藏的诗句",
+     useTitle:"使用说明",discTitle:"免责声明",aboutTitle:"关于",
+     use:`<p>飞花令是中国古代酒令之一，源出唐代韩翃《寒食》：「春城无处不飞花」。</p>
+       <h3>玩法</h3><ul><li>选一个「令字」</li><li>看含该字的经典诗句</li><li>轮流说出含令字的诗句，不可重复，接不上者饮一杯</li></ul>
+       <h3>操作</h3><ul><li>点上方令字 → 切换诗句库</li><li>点某句诗 → 查看全诗与解读</li><li>「随机一句」→ 抽取一句</li><li>点 ★ → 收藏喜欢的诗句</li></ul>`,
+     disc:`<p>本软件仅供中华古典诗词的学习、赏析与娱乐。</p>
+       <p>所载诗句、译文与解读均整理自公开文献，仅供参考，可能存在疏漏，欢迎指正。</p>
+       <p>本软件不含任何占卜、预测、迷信内容，亦不用于商业用途。</p>`,
+     about:`<p><b>飞花令 PetalVerse</b> —— 一字飞花，满目诗情。</p>
+       <p>收录十六个高频令字、近二百句经典诗词，带你重温古人行令雅趣。</p>
+       <p>作者：永远的兰兰 · Lanlan Eternal</p>`},
+ en:{subtitle:"One word, a thousand verses",ptitle:"Pick a keyword",phint:"Tap a keyword to reveal classic verses; tap a verse for its full reading",
+     rand:"Random",fav:"Favorites",pick:"Choose a character",empty:"—",noFav:"No favorites yet",favs:"Favorites",
+     useTitle:"How to use",discTitle:"Disclaimer",aboutTitle:"About",
+     use:`<p>Feihua Ling is an ancient Chinese drinking game, named after Han Hong's poem: "Spring city, nowhere without flying flowers."</p>
+       <h3>Rules</h3><ul><li>Pick a keyword</li><li>Read classic verses containing it</li><li>Take turns quoting verses with the keyword, no repeats</li></ul>
+       <h3>Tips</h3><ul><li>Tap a keyword to switch the verse list</li><li>Tap a verse to read the full poem and notes</li><li>"Random" draws a verse</li><li>Tap ★ to save favorites</li></ul>`,
+     disc:`<p>This app is for the study, appreciation and enjoyment of classical Chinese poetry only.</p>
+       <p>Verses, translations and notes are compiled from public sources for reference and may contain errors.</p>
+       <p>It contains no divination, fortune-telling or superstition, and is not for commercial use.</p>`,
+     about:`<p><b>PetalVerse (Feihua Ling)</b> — one word, a thousand verses.</p>
+       <p>A collection of sixteen keywords and nearly two hundred classic verses.</p>
+       <p>By Lanlan Eternal</p>`}
+};
+
+function $(id){return document.getElementById(id);}
+function tr(k){return I18N[lang][k];}
+
+function renderChips(){
+  const c=$("chips"); c.innerHTML="";
+  FEIHUA.forEach(function(x){
+    const d=document.createElement("div");
+    d.className="chip"+(cur&&cur.ch===x.ch?" on":"");
+    d.innerHTML=x.ch+"<small>"+x.en+"</small>";
+    d.onclick=function(){select(x);};
+    c.appendChild(d);
+  });
+}
+function select(x){
+  cur=x;
+  renderChips();
+  $("ptitle").textContent=tr("ptitle")+" · "+x.ch;
+  $("phint").textContent=x.poems.length+" "+(lang==="zh"?"句含「":"verses with \"")+x.ch+(lang==="zh"?"」的经典诗句":"\"");
+  renderList(x);
+  $("spot").textContent=tr("empty");
+}
+function renderList(x){
+  const ul=$("plist"); ul.innerHTML="";
+  x.poems.forEach(function(p,idx){
+    const li=document.createElement("li");
+    const key=x.ch+"|"+p.L;
+    const favd=fav.indexOf(key)>=0;
+    const lineText = lang==="en" ? p.E : p.L;
+    li.innerHTML='<span class="t">'+lineText+'</span>'+
+      '<span class="src">'+p.A+' '+p.T+'</span>'+
+      '<span class="star'+(favd?' on':'')+'" data-k="'+key+'" onclick="event.stopPropagation();star(this)">&#9733;</span>';
+    li.onclick=function(){openModal(p);};
+    ul.appendChild(li);
+  });
+}
+function openModal(p){
+  $("mFull").textContent=p.F;
+  $("mMeta").textContent="—— "+p.A+"《"+p.T+"》";
+  $("mEn").textContent=p.E;
+  $("mNote").textContent=p.N;
+  $("modal").classList.add("show");
+}
+function closeModal(){
+  $("modal").classList.remove("show");
+}
+$("modal").addEventListener("click",function(e){ if(e.target===this) closeModal(); });
+
+function star(el){
+  const k=el.getAttribute("data-k");
+  const i=fav.indexOf(k);
+  if(i>=0){fav.splice(i,1); el.classList.remove("on");}
+  else{fav.push(k); el.classList.add("on");}
+  localStorage.setItem("feihua_fav",JSON.stringify(fav));
+}
+function randomPick(){
+  if(!cur){return;}
+  const p=cur.poems[Math.floor(Math.random()*cur.poems.length)];
+  $("spot").innerHTML=(lang==="en"?p.E:p.L)+'<span class="who">—— '+p.A+' '+p.T+'</span>';
+}
+function toggleFavList(){
+  if(!fav.length){$("spot").textContent=tr("noFav");return;}
+  const list=fav.map(function(k){const a=k.split("|"); return '「'+a[1]+'」';}).join(" · ");
+  $("spot").innerHTML=tr("favs")+"："+list;
+}
+function toggleTheme(){
+  theme=theme==="light"?"dark":"light";
+  document.body.setAttribute("data-theme",theme);
+  $("btnTheme").textContent=theme==="light"?"🌙 暗色":"☀ 亮色";
+  localStorage.setItem("feihua_theme",theme);
+}
+function toggleLang(){
+  lang=lang==="zh"?"en":"zh";
+  localStorage.setItem("feihua_lang",lang);
+  applyLang();
+  if(cur){renderList(cur);}
+}
+function switchTab(k){
+  const tabs=document.querySelectorAll(".tab");
+  tabs.forEach(function(t){t.className="tab"+(t.getAttribute("data-t")===k?" on":"");});
+  $("tabbody").innerHTML=tr(k==="use"?"useTitle":k==="disc"?"discTitle":"aboutTitle")+"<br>"+tr(k);
+}
+function applyLang(){
+  $("subtitle").textContent=tr("subtitle");
+  $("btnRand").textContent=tr("rand");
+  $("btnFav").textContent=tr("fav");
+  $("btnLang").textContent=lang==="en"?"中文":"EN";
+  const tabs=document.querySelectorAll(".tab");
+  tabs[0].textContent=tr("useTitle");
+  tabs[1].textContent=tr("discTitle");
+  tabs[2].textContent=tr("aboutTitle");
+  if(cur){
+    $("ptitle").textContent=tr("ptitle")+" · "+cur.ch;
+    $("phint").textContent=cur.poems.length+" "+(lang==="zh"?"句含「":"verses with \"")+cur.ch+(lang==="zh"?"」的经典诗句":"\"");
+  }else{
+    $("ptitle").textContent=tr("ptitle");
+    $("phint").textContent=tr("phint");
+  }
+  const active=document.querySelector(".tab.on");
+  if(active){switchTab(active.getAttribute("data-t"));}
+}
+function init(){
+  document.body.setAttribute("data-theme",theme);
+  $("btnTheme").textContent=theme==="light"?"🌙 暗色":"☀ 亮色";
+  applyLang();
+  renderChips();
+}
+init();
+</script>
+</body>
+</html>
