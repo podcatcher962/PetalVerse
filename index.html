@@ -58,6 +58,8 @@ ul.plist li .star.on{color:var(--gold);}
 .tabbody li{margin-bottom:6px;}
 footer{text-align:center; font-size:12px; color:var(--muted); margin-top:26px; letter-spacing:1px;}
 footer a{color:var(--gold); text-decoration:none;}
+.sisters{margin-bottom:10px; font-size:12px; letter-spacing:0;}
+.sisters a{margin:0 4px;}
 .modal{position:fixed; inset:0; background:var(--overlay); display:none; align-items:center; justify-content:center; z-index:99; padding:20px;}
 .modal.show{display:flex;}
 .modal .box{background:var(--card); border:1px solid var(--line); border-radius:14px; max-width:560px; width:100%; max-height:82vh; overflow:auto; padding:26px 28px; position:relative;}
@@ -101,7 +103,16 @@ footer a{color:var(--gold); text-decoration:none;}
     <div class="tabbody" id="tabbody"></div>
   </div>
 
-  <footer>永远的兰兰 · Lanlan Eternal</footer>
+  <footer>
+    <div class="sisters"><span id="sisterLabel">姊妹工具</span> ·
+      <a href="https://podcatcher962.github.io/PixelBaZi/">PixelBaZi</a> ·
+      <a href="https://podcatcher962.github.io/IChing/">IChing</a> ·
+      <a href="https://podcatcher962.github.io/YuguTether/">YuguTether</a> ·
+      <a href="https://podcatcher962.github.io/ZiOracle/">ZiOracle</a> ·
+      <a href="https://podcatcher962.github.io/AvalokitaOracle/">AvalokitaOracle</a>
+    </div>
+    <div>永远的兰兰 · Lanlan Eternal</div>
+  </footer>
 </div>
 
 <div class="modal" id="modal">
@@ -475,8 +486,8 @@ const I18N={
        <p>所载诗句、译文与解读均整理自公开文献，仅供参考，可能存在疏漏，欢迎指正。</p>
        <p>本软件不含任何占卜、预测、迷信内容，亦不用于商业用途。</p>`,
      about:`<p><b>飞花令 PetalVerse</b> —— 一字飞花，满目诗情。</p>
-       <p>收录十六个高频令字、近二百句经典诗词，带你重温古人行令雅趣。</p>
-       <p>作者：永远的兰兰 · Lanlan Eternal</p>`},
+       <p>收录二十四个高频令字、三百余句经典诗词，带你重温古人行令雅趣。</p>
+       <p>作者：永远的兰兰 · Lanlan Eternal</p>`,sister:"姊妹工具"},
  en:{subtitle:"One word, a thousand verses",ptitle:"Pick a keyword",phint:"Tap a keyword to reveal classic verses; tap a verse for its full reading",
      rand:"Random",fav:"Favorites",pick:"Choose a character",empty:"—",noFav:"No favorites yet",favs:"Favorites",
      useTitle:"How to use",discTitle:"Disclaimer",aboutTitle:"About",
@@ -487,8 +498,8 @@ const I18N={
        <p>Verses, translations and notes are compiled from public sources for reference and may contain errors.</p>
        <p>It contains no divination, fortune-telling or superstition, and is not for commercial use.</p>`,
      about:`<p><b>PetalVerse (Feihua Ling)</b> — one word, a thousand verses.</p>
-       <p>A collection of sixteen keywords and nearly two hundred classic verses.</p>
-       <p>By Lanlan Eternal</p>`}
+       <p>A collection of twenty-four keywords and over three hundred classic verses.</p>
+       <p>By Lanlan Eternal</p>`,sister:"Sister tools"}
 };
 
 function $(id){return document.getElementById(id);}
@@ -577,6 +588,7 @@ function applyLang(){
   $("btnRand").textContent=tr("rand");
   $("btnFav").textContent=tr("fav");
   $("btnLang").textContent=lang==="en"?"中文":"EN";
+  $("sisterLabel").textContent=tr("sister");
   const tabs=document.querySelectorAll(".tab");
   tabs[0].textContent=tr("useTitle");
   tabs[1].textContent=tr("discTitle");
