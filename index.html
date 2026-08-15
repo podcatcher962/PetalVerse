@@ -68,14 +68,20 @@ footer a{color:var(--gold); text-decoration:none;}
 .modal .meta{text-align:center; color:var(--muted); font-size:13px; margin-bottom:14px;}
 .modal .en{font-size:14px; font-style:italic; color:var(--gold); text-align:center; margin-bottom:14px; font-family:Georgia,serif;}
 .modal .note{font-size:14px; color:var(--ink); border-top:1px dashed var(--line); padding-top:12px;}
+/* 开屏海报 */
+#splash{position:fixed;inset:0;z-index:300;background:#f2e6cd url('generated-images/PetalVerse_poster_final.jpg') center/contain no-repeat;animation:splashFade 9s ease forwards;}
+@keyframes splashFade{0%{opacity:0}8%{opacity:1}70%{opacity:1}100%{opacity:0;visibility:hidden}}
 </style>
 </head>
 <body data-theme="light">
+<div id="splash"></div>
+<audio id="bgm" loop src="audio/petalverse.mp3"></audio>
 <div class="wrap">
   <header>
     <h1>飞花令<span class="en">PETAL VERSE</span></h1>
     <div class="toolbar">
       <button id="btnTheme" onclick="toggleTheme()">🌙 暗色</button>
+      <button id="btnSound" onclick="toggleSound()" title="背景音乐">♪ 音乐</button>
       <button id="btnLang" onclick="toggleLang()">EN</button>
     </div>
   </header>
@@ -572,6 +578,25 @@ function toggleTheme(){
   $("btnTheme").textContent=theme==="light"?"🌙 暗色":"☀ 亮色";
   localStorage.setItem("feihua_theme",theme);
 }
+// 背景音乐（默认播放）
+let soundOn = true;
+function toggleSound(){
+  soundOn = !soundOn;
+  const bgm = document.getElementById('bgm');
+  if(soundOn){ bgm.play().catch(()=>{}); }
+  else { bgm.pause(); }
+  $("btnSound").className = soundOn ? 'on' : '';
+}
+(function(){
+  const bgm = document.getElementById('bgm');
+  if(!bgm) return;
+  bgm.volume = 0.35;
+  bgm.play().catch(()=>{});
+  $("btnSound").className = 'on';
+  document.addEventListener('pointerdown', function(){
+    if(soundOn && bgm.paused) bgm.play().catch(()=>{});
+  });
+})();
 function toggleLang(){
   lang=lang==="zh"?"en":"zh";
   localStorage.setItem("feihua_lang",lang);
@@ -588,6 +613,7 @@ function applyLang(){
   $("btnRand").textContent=tr("rand");
   $("btnFav").textContent=tr("fav");
   $("btnLang").textContent=lang==="en"?"中文":"EN";
+  $("btnSound").textContent=lang==="en"?"♪ Music":"♪ 音乐";
   $("sisterLabel").textContent=tr("sister");
   const tabs=document.querySelectorAll(".tab");
   tabs[0].textContent=tr("useTitle");
