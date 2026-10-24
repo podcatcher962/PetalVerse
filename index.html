@@ -200,7 +200,7 @@ footer a{color:var(--gold); text-decoration:none;}
       <a target="_blank" rel="noopener" href="https://podcatcher962.github.io/XianReverie/">闲坐</a> ·
       <a target="_blank" rel="noopener" href="https://podcatcher962.github.io/GentleJoy/">清欢</a>
     </div>
-    <div>飞花令 PetalVerse v2.5 · 永远的兰兰 · Lanlan Eternal</div>
+    <div>飞花令 PetalVerse v2.6 · 永远的兰兰 · Lanlan Eternal</div>
   </footer>
 </div>
 
@@ -757,9 +757,7 @@ function applyLang(){
     if(done && typeof renderEnd==="function") renderEnd();   /* 结算页跟着语言重绘 */
     else if(typeof drawFeed==="function") drawFeed();        /* 未结算：作答反馈跟着语言重绘 */
   }
-  if($("gLine")) $("gLine").innerHTML = lang==="en"
-    ? 'Q <b id="gProg">'+(gIdx+1)+'</b> / <b id="gTot">'+gTotal+'</b>'
-    : '第 <b id="gProg">'+(gIdx+1)+'</b> 句 / 共 <b id="gTot">'+gTotal+'</b> 句';
+  renderGLine(null);   /* null = 按状态推算：结算时取 gTotal，否则取 gIdx+1 */
   if($("gScoreLine")) $("gScoreLine").innerHTML = lang==="en"
     ? '<b id="gScore">'+gRight+'</b> matched'
     : '已接 <b id="gScore">'+gRight+'</b> 句花令';
@@ -997,7 +995,17 @@ function nextTurn(){
 }
 
 /* 结算面板改成「按当前局面重绘」：切语言时也走这里，否则那段文本会停在生成时的语言 */
+/* 计分行：结算时 gIdx 已等于 gTotal（nextTurn 先 ++ 再判 >= 才 endGame），
+   直接 gIdx+1 会写成「第 7 句 / 共 6 句」，而且这行在结算页一直可见，切一次语言就不复原 */
+function renderGLine(shown){
+  var gl=$("gLine"); if(!gl) return;
+  if(shown == null) shown = (gTotal > 0 && gCur === null) ? gTotal : gIdx + 1;
+  gl.innerHTML = lang==="en"
+    ? 'Q <b id="gProg">'+shown+'</b> / <b id="gTot">'+gTotal+'</b>'
+    : '第 <b id="gProg">'+shown+'</b> 句 / 共 <b id="gTot">'+gTotal+'</b> 句';
+}
 function renderEnd(){
+  renderGLine(gTotal);   /* 进结算那一刻就写对，不等切语言才修 */
   var en = (lang === "en");
   gFb = null;
   var rate = gTotal ? gRight / gTotal : 0, cmt;
