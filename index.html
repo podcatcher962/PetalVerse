@@ -200,7 +200,7 @@ footer a{color:var(--gold); text-decoration:none;}
       <a target="_blank" rel="noopener" href="https://podcatcher962.github.io/XianReverie/">闲坐</a> ·
       <a target="_blank" rel="noopener" href="https://podcatcher962.github.io/GentleJoy/">清欢</a>
     </div>
-    <div>飞花令 PetalVerse v2.6 · 永远的兰兰 · Lanlan Eternal</div>
+    <div>飞花令 PetalVerse v2.7 · 永远的兰兰 · Lanlan Eternal</div>
   </footer>
 </div>
 
@@ -750,8 +750,9 @@ function applyLang(){
     : "看清令字与上句，从四句中挑出原诗的下一句；不必计时，慢慢想。";
   if($("gNew")) $("gNew").textContent = lang==="en" ? "New round" : "换一局";
   if($("gNext")){
-    // 一局已结束（gCur 为空且开过局）→「再来一局」；否则→「下一句」
-    var done = (gTotal > 0 && gCur === null);
+    // 一局已结束（开过局、且 gCur 为空）→「再来一局」；否则→「下一句」
+    // 用 gPool 判「开过局」：gTotal 默认就是 10，光看它会在未开局时误判成已结算
+    var done = (gPool.length > 0 && gCur === null);
     $("gNext").textContent = done ? (lang==="en" ? "New round" : "再来一局")
                                   : (lang==="en" ? "Next" : "下一句");
     if(done && typeof renderEnd==="function") renderEnd();   /* 结算页跟着语言重绘 */
@@ -999,7 +1000,9 @@ function nextTurn(){
    直接 gIdx+1 会写成「第 7 句 / 共 6 句」，而且这行在结算页一直可见，切一次语言就不复原 */
 function renderGLine(shown){
   var gl=$("gLine"); if(!gl) return;
-  if(shown == null) shown = (gTotal > 0 && gCur === null) ? gTotal : gIdx + 1;
+  /* 未开局时 gPool 为空 → 落到 gIdx+1，即「第 1 句 / 共 10 句」这个初始态；
+     以前只看 gTotal（默认 10）和 gCur（默认 null）就当成已结算，会在隐藏面板里写「第 10 句」 */
+  if(shown == null) shown = (gPool.length > 0 && gCur === null) ? gTotal : gIdx + 1;
   gl.innerHTML = lang==="en"
     ? 'Q <b id="gProg">'+shown+'</b> / <b id="gTot">'+gTotal+'</b>'
     : '第 <b id="gProg">'+shown+'</b> 句 / 共 <b id="gTot">'+gTotal+'</b> 句';
