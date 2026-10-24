@@ -28,6 +28,12 @@ h1 .en{font-size:13px; letter-spacing:2px; color:var(--muted); display:block; fo
 .toolbar button{background:var(--card); color:var(--ink); border:1px solid var(--line); border-radius:20px; padding:5px 14px; font-size:13px; cursor:pointer; font-family:inherit; transition:all .2s;}
 .toolbar button:hover{border-color:var(--gold); color:var(--gold);}
 .chips{display:flex; flex-wrap:wrap; gap:9px; margin:18px 0 24px;}
+@media (max-width:640px){
+  body[data-mode="play"] .chips{flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; gap:8px; padding-bottom:8px; scrollbar-width:thin}
+  body[data-mode="play"] .chip{flex:0 0 auto; min-width:46px; padding:7px 4px}
+}
+.chip.off{opacity:.4}
+#spSkip{display:block; margin-top:26px; font-size:12px; letter-spacing:2px; color:#b09a6c; font-style:normal}
 .chip{min-width:52px; text-align:center; padding:8px 6px; border-radius:10px; background:var(--chip); color:var(--chip-ink); border:1px solid var(--line); font-size:22px; cursor:pointer; transition:all .18s; font-family:inherit; line-height:1.2;}
 .chip small{display:block; font-size:9px; letter-spacing:1px; color:var(--muted); font-family:Georgia,serif;}
 .chip:hover{transform:translateY(-2px); border-color:var(--gold);}
@@ -72,15 +78,15 @@ footer a{color:var(--gold); text-decoration:none;}
 /* 开屏：纯 CSS 内联，无外部图片，永不 404 */
 #splash{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;
   background:radial-gradient(circle at 50% 38%,#fffaf0 0%,#f2e6cd 45%,#e6d3ae 100%);
-  animation:splashFade 3.2s ease forwards;cursor:pointer}
-#splash .sp-in{text-align:center;animation:spIn 1.6s ease both}
+  animation:splashFade 2.1s ease forwards;cursor:pointer}
+#splash .sp-in{text-align:center;animation:spIn .9s ease both}
 #splash b{display:block;font-size:64px;letter-spacing:16px;color:#7a5c1e;font-weight:600;
   text-shadow:0 2px 18px rgba(122,92,30,.18);padding-left:16px}
 #splash span{display:block;margin-top:14px;font-size:14px;letter-spacing:8px;color:#a08752;padding-left:8px}
 #splash::after{content:"";position:absolute;left:50%;top:58%;width:120px;height:1px;
   background:linear-gradient(90deg,transparent,#b8914f,transparent);transform:translateX(-50%)}
 @keyframes spIn{0%{opacity:0;transform:translateY(14px) scale(.96)}100%{opacity:1;transform:none}}
-@keyframes splashFade{0%{opacity:1}78%{opacity:1}100%{opacity:0;visibility:hidden}}
+@keyframes splashFade{0%{opacity:1}86%{opacity:1}100%{opacity:0;visibility:hidden}}
 [data-theme="dark"] #splash{background:radial-gradient(circle at 50% 38%,#1a1a34 0%,#0d0d1a 60%,#07070f 100%)}
 [data-theme="dark"] #splash b{color:#e8c46a;text-shadow:0 2px 24px rgba(232,196,106,.25)}
 [data-theme="dark"] #splash span{color:#8a7a52}
@@ -130,7 +136,7 @@ footer a{color:var(--gold); text-decoration:none;}
 </style>
 </head>
 <body data-theme="light">
-<div id="splash"><div class="sp-in"><b>飞花令</b><span>一字飞花 · 满目诗情</span></div></div>
+<div id="splash"><div class="sp-in"><b>飞花令</b><span>一字飞花 · 满目诗情</span><i id="spSkip">轻触任意处继续</i></div></div>
 <div class="wrap">
   <header>
     <h1>飞花令<span class="en">PETAL VERSE</span></h1>
@@ -166,8 +172,8 @@ footer a{color:var(--gold); text-decoration:none;}
     <div class="gbar">
       <div class="gch" id="gCh">花</div>
       <div class="gmeta">
-        <div>第 <b id="gProg">1</b> 句 / 共 <b id="gTot">10</b> 句</div>
-        <div>已接 <b id="gScore">0</b> 句花令</div>
+        <div id="gLine">第 <b id="gProg">1</b> 句 / 共 <b id="gTot">10</b> 句</div>
+        <div id="gScoreLine">已接 <b id="gScore">0</b> 句花令</div>
       </div>
     </div>
     <div class="gup" id="gUp">——</div>
@@ -596,7 +602,10 @@ function renderChips(){
   const c=$("chips"); c.innerHTML="";
   FEIHUA.forEach(function(x){
     const d=document.createElement("div");
-    d.className="chip"+(cur&&cur.ch===x.ch?" on":"");
+    var thin = (MODE==="play") && !(PAIRS[x.ch] && PAIRS[x.ch].length>=3);
+    var active = (MODE==="play") ? gCh : (cur && cur.ch);   // 对句模式下高亮跟当前令字走
+    d.className="chip"+(active===x.ch?" on":"")+(thin?" off":"");
+    if(thin) d.title = lang==="en" ? "Not enough couples for this keyword yet" : "这个字的对句还不够，点它会自动换字";
     d.innerHTML=x.ch+"<small>"+x.en+"</small>";
     d.onclick=function(){select(x);};
     c.appendChild(d);
@@ -707,6 +716,20 @@ function switchTab(k){
 }
 function applyLang(){
   $("subtitle").textContent=tr("subtitle");
+  // ── 对句面板：骨架文案跟随语言（诗句本身为中文原文，不翻译）──
+  if($("gTitle")) $("gTitle").textContent = lang==="en" ? "Feihua Ling · Match the line" : "飞花令 · 对句";
+  if($("gHint")) $("gHint").textContent = lang==="en"
+    ? "The keyword and verses are classical Chinese. Pick the line that originally follows the one shown. No timer, no penalty."
+    : "看清令字与上句，从四句中挑出原诗的下一句；不必计时，慢慢想。";
+  if($("gNew")) $("gNew").textContent = lang==="en" ? "New round" : "换一局";
+  if($("gNext") && $("gNext").disabled) $("gNext").textContent = lang==="en" ? "Next" : "下一句";
+  if($("gLine")) $("gLine").innerHTML = lang==="en"
+    ? 'Q <b id="gProg">'+(gIdx+1)+'</b> / <b id="gTot">'+gTotal+'</b>'
+    : '第 <b id="gProg">'+(gIdx+1)+'</b> 句 / 共 <b id="gTot">'+gTotal+'</b> 句';
+  if($("gScoreLine")) $("gScoreLine").innerHTML = lang==="en"
+    ? '<b id="gScore">'+gRight+'</b> matched'
+    : '已接 <b id="gScore">'+gRight+'</b> 句花令';
+  if($("spSkip")) $("spSkip").textContent = lang==="en" ? "Tap anywhere to continue" : "轻触任意处继续";
   var mb=document.querySelectorAll(".mode");
   if(mb[0]) mb[0].textContent = lang==="en" ? "📖 Read" : "📖 赏句";
   if(mb[1]) mb[1].textContent = lang==="en" ? "🎋 Match" : "🎋 对句";
@@ -770,6 +793,8 @@ function esc(s){
 
 function switchMode(m){
   MODE = m;
+  document.body.setAttribute("data-mode", m);
+  renderChips();
   var btns = document.querySelectorAll(".mode");
   for(var i = 0; i < btns.length; i++){
     btns[i].className = "mode" + (btns[i].getAttribute("data-m") === m ? " on" : "");
@@ -800,7 +825,7 @@ function startGame(ch){
   gIdx = 0; gRight = 0; gCur = null; gLocked = false;
   $("gCh").textContent = ch;
   $("gTot").textContent = gTotal;
-  $("gNext").textContent = "下一句";
+  $("gNext").textContent = (lang==="en" ? "Next" : "下一句");
   $("gNext").onclick = function(){ nextTurn(); };
   renderTurn();
   if(asked && asked !== ch){
@@ -900,7 +925,7 @@ function nextTurn(){
 function endGame(){
   var cmt;
   var rate = gTotal ? gRight / gTotal : 0;
-  if(gRight === gTotal && gTotal >= 5) cmt = "全中，可为诗社祭酒。";
+  if(gRight === gTotal && gTotal >= 4) cmt = "全中，可为诗社祭酒。";
   else if(rate >= 0.8) cmt = "腹有诗书，令官颔首。";
   else if(rate >= 0.5) cmt = "已得半壁，不妨再温几首。";
   else cmt = "令官斟酒一杯 —— 先去「赏句」读几首，再来接。";
@@ -919,12 +944,12 @@ function endGame(){
 function init(){
   document.body.setAttribute("data-theme",theme);
   $("btnTheme").textContent=theme==="light"?"🌙 暗色":"☀ 亮色";
+  buildPairs();
   applyLang();
   renderChips();
-  buildPairs();
   if(!/[?&]m=play/.test(location.search) && FEIHUA[0]) select(FEIHUA[0]);
   var sp=document.getElementById("splash");
-  if(sp){ sp.onclick=function(){ sp.style.display="none"; }; setTimeout(function(){ if(sp) sp.style.display="none"; },3400); }
+  if(sp){ sp.onclick=function(){ sp.style.display="none"; }; setTimeout(function(){ if(sp) sp.style.display="none"; },2300); }
   if(/[?&]m=play/.test(location.search)) switchMode("play");
 }
 init();
