@@ -599,17 +599,25 @@ function $(id){return document.getElementById(id);}
 function tr(k){return I18N[lang][k];}
 
 function renderChips(){
-  const c=$("chips"); c.innerHTML="";
+  const c=$("chips"); c.innerHTML=""; var hit=null;
   FEIHUA.forEach(function(x){
     const d=document.createElement("div");
-    var thin = (MODE==="play") && !(PAIRS[x.ch] && PAIRS[x.ch].length>=3);
+    var thin = (MODE==="play") && strongCount(x.ch) < 3;
     var active = (MODE==="play") ? gCh : (cur && cur.ch);   // 对句模式下高亮跟当前令字走
     d.className="chip"+(active===x.ch?" on":"")+(thin?" off":"");
     if(thin) d.title = lang==="en" ? "Not enough couples for this keyword yet" : "这个字的对句还不够，点它会自动换字";
     d.innerHTML=x.ch+"<small>"+x.en+"</small>";
     d.onclick=function(){select(x);};
     c.appendChild(d);
+    if(active===x.ch) hit=d;
   });
+  /* 窄屏令字墙是单行横滑，不把高亮滚进视野等于「高亮做了但看不见」 */
+  if(hit){
+    var br=c.getBoundingClientRect(), dr=hit.getBoundingClientRect();
+    if(c.scrollWidth > c.clientWidth + 1){
+      c.scrollLeft += (dr.left - br.left) - (br.width - dr.width) / 2;
+    }
+  }
 }
 function select(x){
   if(MODE==="play"){ startGame(x.ch); return; }
@@ -722,7 +730,13 @@ function applyLang(){
     ? "The keyword and verses are classical Chinese. Pick the line that originally follows the one shown. No timer, no penalty."
     : "看清令字与上句，从四句中挑出原诗的下一句；不必计时，慢慢想。";
   if($("gNew")) $("gNew").textContent = lang==="en" ? "New round" : "换一局";
-  if($("gNext") && $("gNext").disabled) $("gNext").textContent = lang==="en" ? "Next" : "下一句";
+  if($("gNext")){
+    // 一局已结束（gCur 为空且开过局）→「再来一局」；否则→「下一句」
+    var done = (gTotal > 0 && gCur === null);
+    $("gNext").textContent = done ? (lang==="en" ? "New round" : "再来一局")
+                                  : (lang==="en" ? "Next" : "下一句");
+    if(done && typeof renderEnd==="function") renderEnd();   /* 结算页跟着语言重绘 */
+  }
   if($("gLine")) $("gLine").innerHTML = lang==="en"
     ? 'Q <b id="gProg">'+(gIdx+1)+'</b> / <b id="gTot">'+gTotal+'</b>'
     : '第 <b id="gProg">'+(gIdx+1)+'</b> 句 / 共 <b id="gTot">'+gTotal+'</b> 句';
@@ -759,6 +773,14 @@ var NOPTS = 4;
 var gPool = [], gIdx = 0, gTotal = 10, gRight = 0, gCh = "花", gCur = null, gLocked = false;
 
 // 从完整诗文中切出「上句→下句」，只保留像样的对句
+/* 唯一判据：上句本身含令字的联数。灰标、出题、换字都从这一个函数取，
+   否则「总数够 3 但含令字的只有 0 联」就会出死题（愁/家 当初就是这么漏的） */
+function strongCount(ch){
+  var p = PAIRS[ch] || [], n = 0, i;
+  for(i = 0; i < p.length; i++){ if(p[i].a.indexOf(ch) >= 0) n++; }
+  return n;
+}
+
 function buildPairs(){
   FEIHUA.forEach(function(item){
     var ch = item.ch, arr = [], seen = {};
@@ -807,11 +829,7 @@ function switchMode(m){
 function startGame(ch){
   var chs = FEIHUA.map(function(x){ return x.ch; });
   // 只从「上句本身含令字、且至少 3 联」的令字里出题：题干一定带令字，照规矩就选得对
-  var usable = chs.filter(function(c){
-    var p = PAIRS[c] || [], n = 0;
-    for(var i = 0; i < p.length; i++){ if(p[i].a.indexOf(c) >= 0) n++; }
-    return n >= 3;
-  });
+  var usable = chs.filter(function(c){ return strongCount(c) >= 3; });
   if(!usable.length) usable = chs;
   var asked = ch;
   if(!ch || usable.indexOf(ch) < 0) ch = usable[Math.floor(Math.random() * usable.length)];
@@ -829,7 +847,9 @@ function startGame(ch){
   $("gNext").onclick = function(){ nextTurn(); };
   renderTurn();
   if(asked && asked !== ch){
-    $("gFeed").innerHTML = "「" + esc(asked) + "」可用的对句还不够，先拿「" + esc(ch) + "」开一局。";
+    $("gFeed").innerHTML = (lang==="en")
+      ? "Not enough matching lines for \u201c" + esc(asked) + "\u201d yet — starting with \u201c" + esc(ch) + "\u201d instead."
+      : "「" + esc(asked) + "」可用的对句还不够，先拿「" + esc(ch) + "」开一局。";
   }
   switchMode("play");
 }
@@ -922,23 +942,30 @@ function nextTurn(){
   renderTurn();
 }
 
-function endGame(){
-  var cmt;
-  var rate = gTotal ? gRight / gTotal : 0;
-  if(gRight === gTotal && gTotal >= 4) cmt = "全中，可为诗社祭酒。";
-  else if(rate >= 0.8) cmt = "腹有诗书，令官颔首。";
-  else if(rate >= 0.5) cmt = "已得半壁，不妨再温几首。";
-  else cmt = "令官斟酒一杯 —— 先去「赏句」读几首，再来接。";
+/* 结算面板改成「按当前局面重绘」：切语言时也走这里，否则那段文本会停在生成时的语言 */
+function renderEnd(){
+  var en = (lang === "en");
+  var rate = gTotal ? gRight / gTotal : 0, cmt;
+  if(gRight === gTotal && gTotal >= 4) cmt = en ? "A clean sweep \u2014 the toastmaster bows to you." : "全中，可为诗社祭酒。";
+  else if(rate >= 0.8) cmt = en ? "Well read; the toastmaster nods." : "腹有诗书，令官颔首。";
+  else if(rate >= 0.5) cmt = en ? "Half the wall \u2014 a few more poems will do." : "已得半壁，不妨再温几首。";
+  else cmt = en ? "A cup poured for you \u2014 read a few in Read, then come back." : "令官斟酒一杯 —— 先去「赏句」读几首，再来接。";
   $("gUp").innerHTML = '<div class="gend"><div class="big">' + gRight + " / " + gTotal + "</div>" +
     '<div class="cmt">' + esc(cmt) + "</div>" +
-    '<div class="sig">令字「' + esc(gCh) + "」· 永远的兰兰</div></div>";
+    '<div class="sig">' + (en ? "Keyword \u201c" + esc(gCh) + "\u201d \u00b7 Lanlan Eternal" : "令字「" + esc(gCh) + "」\u00b7 永远的兰兰") + "</div></div>";
   $("gOpts").innerHTML = "";
-  $("gFeed").innerHTML = "点「再来一局」换一个令字，或点上方任一令字指定开局。";
-  $("gNext").textContent = "再来一局";
+  $("gFeed").innerHTML = en
+    ? "Tap New round for another keyword, or pick any keyword above."
+    : "点「再来一局」换一个令字，或点上方任一令字指定开局。";
+  $("gNext").textContent = en ? "New round" : "再来一局";
+}
+
+function endGame(){
+  gCur = null;
   $("gNext").disabled = false;
   $("gNext").onclick = function(){ startGame(); };
+  renderEnd();
   pluck(7, 0.16);
-  gCur = null;
 }
 
 function init(){
