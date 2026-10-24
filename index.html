@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>飞花令 · PetalVerse</title>
-<meta name="description" content="飞花令 PetalVerse：24 个高频令字、318 句经典诗词。既能赏句——点令字看诗句全篇与解读；也能对句——给出上句，从四句中挑出原诗下一句，一局十句，不计时不扣分。">
+<meta name="description" content="飞花令 PetalVerse：24 个高频令字、318 句经典诗词。既能赏句——点令字看诗句全篇与解读；也能对句——给出上句，从四句中挑出原诗下一句，每局最多十句，不计时不扣分。">
 <style>
 :root{
   --bg:#f2e6cd; --card:#faf0dc; --ink:#3e2f1d; --gold:#7a5c1e; --line:#b8914f;
@@ -156,7 +156,7 @@ footer a{color:var(--gold); text-decoration:none;}
       <button class="btn" id="btnRand" onclick="randomPick()">随机一句</button>
       <button class="btn" id="btnFav" onclick="toggleFavList()">我的收藏</button>
     </div>
-    <div class="spot" id="spot">—</div>
+    <div class="spot" id="spot">点下面「随机一句」抽一句</div>
     <ul class="plist" id="plist"></ul>
   </div>
 
@@ -190,9 +190,9 @@ footer a{color:var(--gold); text-decoration:none;}
 
   <footer>
     <div class="sisters"><span id="sisterLabel">姊妹工具</span> ·
-      <a href="https://podcatcher962.github.io/xianidle/">拾闲</a> ·
-      <a href="https://podcatcher962.github.io/XianReverie/">闲坐</a> ·
-      <a href="https://podcatcher962.github.io/GentleJoy/">清欢</a>
+      <a target="_blank" rel="noopener" href="https://podcatcher962.github.io/xianidle/">拾闲</a> ·
+      <a target="_blank" rel="noopener" href="https://podcatcher962.github.io/XianReverie/">闲坐</a> ·
+      <a target="_blank" rel="noopener" href="https://podcatcher962.github.io/GentleJoy/">清欢</a>
     </div>
     <div>永远的兰兰 · Lanlan Eternal</div>
   </footer>
@@ -560,12 +560,12 @@ let theme=localStorage.getItem("feihua_theme")||"light";
 
 const I18N={
  zh:{subtitle:"一字飞花，满目诗情",ptitle:"选一个令字",phint:"点击上方令字，展开含该字的经典诗句；再点诗句可看完整解读",
-     rand:"随机一句",fav:"我的收藏",pick:"挑一个令字",empty:"—",noFav:"还没有收藏的诗句",favs:"收藏的诗句",
+     rand:"随机一句",fav:"我的收藏",pick:"挑一个令字",empty:"点「随机一句」抽一句",noFav:"还没有收藏的诗句",favs:"收藏的诗句",
      useTitle:"使用说明",discTitle:"免责声明",aboutTitle:"关于",
      use:`<p>飞花令是中国古代酒令之一，源出唐代韩翃《寒食》：「春城无处不飞花」。</p>
        <h3>两种玩法</h3>
        <ul><li><b>赏句</b>：点上方任一令字，展开含该字的经典诗句；点诗句可看全诗、英译与解读，点 ★ 收藏。</li>
-       <li><b>对句</b>：抽一个令字，系统给出上句，你从四句里挑出原诗的下一句。一局十句，不计时、不扣分，答错会告诉你原句与出处。</li></ul>
+       <li><b>对句</b>：抽一个令字，系统给出上句，你从四句里挑出原诗的下一句。每局最多十句，不计时、不扣分，答错会告诉你原句与出处。</li></ul>
        <h3>三步上手</h3><ul><li>① 点顶部「🎋 对句」</li><li>② 看令字与上句，选一句</li><li>③ 点「下一句」继续，或「换一局」换令字</li></ul>
        <h3>其他</h3><ul><li>「🎋 对句」下点任一令字 → 直接指定该字开局</li><li>右上「EN」切换中英，「🌙」切换明暗，「♪」开关音效</li></ul>`,
      disc:`<p>本软件仅供中华古典诗词的学习、赏析与娱乐。</p>
@@ -575,11 +575,11 @@ const I18N={
        <p>收录二十四个高频令字、三百余句经典诗词，带你重温古人行令雅趣。</p>
        <p>作者：永远的兰兰 · Lanlan Eternal</p>`,sister:"姊妹工具"},
  en:{subtitle:"One word, a thousand verses",ptitle:"Pick a keyword",phint:"Tap a keyword to reveal classic verses; tap a verse for its full reading",
-     rand:"Random",fav:"Favorites",pick:"Choose a character",empty:"—",noFav:"No favorites yet",favs:"Favorites",
+     rand:"Random",fav:"Favorites",pick:"Choose a character",empty:"Tap Random to draw a verse",noFav:"No favorites yet",favs:"Favorites",
      useTitle:"How to use",discTitle:"Disclaimer",aboutTitle:"About",
      use:`<p>Feihua Ling is an ancient Chinese drinking game, named after Han Hong's poem: "Spring city, nowhere without flying flowers."</p>
        <h3>Two modes</h3><ul><li><b>Read</b>: tap a keyword to list classic verses containing it; tap a verse for the full poem, translation and notes.</li>
-       <li><b>Match</b>: a keyword is drawn, you are given the first line, and you pick the original second line out of four. Ten rounds, no timer, no penalty.</li></ul>
+       <li><b>Match</b>: a keyword is drawn, you are given the first line, and you pick the original second line out of four. Up to ten rounds, no timer, no penalty.</li></ul>
        <h3>Quick start</h3><ul><li>1. Tap "🎋 对句" at the top</li><li>2. Read the keyword and first line, pick one</li><li>3. "下一句" for the next, "换一局" for a new keyword</li></ul>`,
      disc:`<p>This app is for the study, appreciation and enjoyment of classical Chinese poetry only.</p>
        <p>Verses, translations and notes are compiled from public sources for reference and may contain errors.</p>
@@ -607,7 +607,7 @@ function select(x){
   cur=x;
   renderChips();
   $("ptitle").textContent=tr("ptitle")+" · "+x.ch;
-  $("phint").textContent=x.poems.length+" "+(lang==="zh"?"句含「":"verses with \"")+x.ch+(lang==="zh"?"」的经典诗句":"\"");
+  $("phint").textContent=x.poems.length+" "+(lang==="zh"?"句含「":"verses with \"")+x.ch+(lang==="zh"?"」· 点诗句看全诗与解读":"\" · tap a verse for the full reading");
   renderList(x);
   $("spot").textContent=tr("empty");
 }
@@ -721,7 +721,7 @@ function applyLang(){
   tabs[2].textContent=tr("aboutTitle");
   if(cur){
     $("ptitle").textContent=tr("ptitle")+" · "+cur.ch;
-    $("phint").textContent=cur.poems.length+" "+(lang==="zh"?"句含「":"verses with \"")+cur.ch+(lang==="zh"?"」的经典诗句":"\"");
+    $("phint").textContent=cur.poems.length+" "+(lang==="zh"?"句含「":"verses with \"")+cur.ch+(lang==="zh"?"」· 点诗句看全诗与解读":"\" · tap a verse for the full reading");
   }else{
     $("ptitle").textContent=tr("ptitle");
     $("phint").textContent=tr("phint");
@@ -781,12 +781,19 @@ function switchMode(m){
 
 function startGame(ch){
   var chs = FEIHUA.map(function(x){ return x.ch; });
-  if(!ch) ch = chs[Math.floor(Math.random() * chs.length)];
+  // 只从「上句本身含令字、且至少 3 联」的令字里出题：题干一定带令字，照规矩就选得对
+  var usable = chs.filter(function(c){
+    var p = PAIRS[c] || [], n = 0;
+    for(var i = 0; i < p.length; i++){ if(p[i].a.indexOf(c) >= 0) n++; }
+    return n >= 3;
+  });
+  if(!usable.length) usable = chs;
+  var asked = ch;
+  if(!ch || usable.indexOf(ch) < 0) ch = usable[Math.floor(Math.random() * usable.length)];
   var all = (PAIRS[ch] || []).slice();
   if(!all.length){ return; }
-  // 优先「上句本身就含令字」的对句；够 5 句就只用这些，宁少而准
   var strong = all.filter(function(x){ return x.a.indexOf(ch) >= 0; });
-  var pool = shuffle(strong.length >= 5 ? strong : all);
+  var pool = shuffle(strong.length >= 3 ? strong : all);
   gCh = ch;
   gPool = pool;
   gTotal = Math.min(10, pool.length);
@@ -796,6 +803,9 @@ function startGame(ch){
   $("gNext").textContent = "下一句";
   $("gNext").onclick = function(){ nextTurn(); };
   renderTurn();
+  if(asked && asked !== ch){
+    $("gFeed").innerHTML = "「" + esc(asked) + "」可用的对句还不够，先拿「" + esc(ch) + "」开一局。";
+  }
   switchMode("play");
 }
 
