@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>飞花令 · PetalVerse</title>
+<meta name="description" content="飞花令 PetalVerse：24 个高频令字、318 句经典诗词。既能赏句——点令字看诗句全篇与解读；也能对句——给出上句，从四句中挑出原诗下一句，一局十句，不计时不扣分。">
 <style>
 :root{
   --bg:#f2e6cd; --card:#faf0dc; --ink:#3e2f1d; --gold:#7a5c1e; --line:#b8914f;
@@ -68,28 +69,87 @@ footer a{color:var(--gold); text-decoration:none;}
 .modal .meta{text-align:center; color:var(--muted); font-size:13px; margin-bottom:14px;}
 .modal .en{font-size:14px; font-style:italic; color:var(--gold); text-align:center; margin-bottom:14px; font-family:Georgia,serif;}
 .modal .note{font-size:14px; color:var(--ink); border-top:1px dashed var(--line); padding-top:12px;}
-/* 开屏海报 */
-#splash{position:fixed;inset:0;z-index:300;background:#f2e6cd url('generated-images/PetalVerse_poster_final.jpg') center/contain no-repeat;animation:splashFade 9s ease forwards;}
-@keyframes splashFade{0%{opacity:0}8%{opacity:1}70%{opacity:1}100%{opacity:0;visibility:hidden}}
+/* 开屏：纯 CSS 内联，无外部图片，永不 404 */
+#splash{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 38%,#fffaf0 0%,#f2e6cd 45%,#e6d3ae 100%);
+  animation:splashFade 3.2s ease forwards;cursor:pointer}
+#splash .sp-in{text-align:center;animation:spIn 1.6s ease both}
+#splash b{display:block;font-size:64px;letter-spacing:16px;color:#7a5c1e;font-weight:600;
+  text-shadow:0 2px 18px rgba(122,92,30,.18);padding-left:16px}
+#splash span{display:block;margin-top:14px;font-size:14px;letter-spacing:8px;color:#a08752;padding-left:8px}
+#splash::after{content:"";position:absolute;left:50%;top:58%;width:120px;height:1px;
+  background:linear-gradient(90deg,transparent,#b8914f,transparent);transform:translateX(-50%)}
+@keyframes spIn{0%{opacity:0;transform:translateY(14px) scale(.96)}100%{opacity:1;transform:none}}
+@keyframes splashFade{0%{opacity:1}78%{opacity:1}100%{opacity:0;visibility:hidden}}
+[data-theme="dark"] #splash{background:radial-gradient(circle at 50% 38%,#1a1a34 0%,#0d0d1a 60%,#07070f 100%)}
+[data-theme="dark"] #splash b{color:#e8c46a;text-shadow:0 2px 24px rgba(232,196,106,.25)}
+[data-theme="dark"] #splash span{color:#8a7a52}
+
+/* ── 模式切换 ── */
+.modes{display:flex;gap:10px;margin-bottom:18px}
+.mode{flex:1;padding:11px 0;border-radius:11px;border:1px solid var(--line);background:var(--card);
+  color:var(--muted);font-family:inherit;font-size:15px;letter-spacing:2px;cursor:pointer;transition:all .18s}
+.mode:hover{border-color:var(--gold);color:var(--gold)}
+.mode.on{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 14px rgba(156,43,43,.22)}
+[data-theme="dark"] .mode.on{color:#0d0d1a}
+
+/* ── 对句玩法 ── */
+.gbar{display:flex;align-items:center;gap:14px;margin:2px 0 16px}
+.gch{width:62px;height:62px;flex:0 0 62px;border-radius:14px;background:var(--accent);color:#fff;
+  font-size:34px;display:flex;align-items:center;justify-content:center;font-weight:600;
+  box-shadow:0 4px 16px rgba(156,43,43,.25)}
+[data-theme="dark"] .gch{color:#0d0d1a}
+.gmeta{font-size:13px;color:var(--muted);letter-spacing:1px;line-height:1.9}
+.gmeta b{color:var(--gold);font-size:15px}
+.gup{font-size:23px;letter-spacing:2px;text-align:center;padding:22px 16px;border-radius:12px;
+  background:var(--chip);border:1px solid var(--line);color:var(--ink);line-height:1.9;margin-bottom:16px}
+.gup em{font-style:normal;color:var(--accent);font-weight:700;border-bottom:2px solid var(--accent);padding:0 1px}
+[data-theme="dark"] .gup em{color:#ffd700;border-color:#ffd700}
+.gopts{display:grid;gap:10px}
+.gopt{text-align:left;padding:13px 16px;border-radius:11px;border:1px solid var(--line);
+  background:var(--card);color:var(--ink);font-family:inherit;font-size:16px;letter-spacing:1px;
+  cursor:pointer;transition:all .16s;line-height:1.7}
+.gopt:hover:not(:disabled){border-color:var(--gold);transform:translateX(3px)}
+.gopt:disabled{cursor:default}
+.gopt.ok{background:#e8f5e9;border-color:#4caf7d;color:#1f5c3c}
+.gopt.no{background:#fdecea;border-color:#d98a80;color:#8d2f22}
+[data-theme="dark"] .gopt.ok{background:#12301f;border-color:#4caf7d;color:#9be3b6}
+[data-theme="dark"] .gopt.no{background:#331512;border-color:#d98a80;color:#f0b3aa}
+.gfeed{margin-top:14px;font-size:14px;line-height:1.85;color:var(--muted);min-height:24px;letter-spacing:.5px}
+.gfeed b{color:var(--gold)}
+.gfoot{display:flex;gap:10px;margin-top:18px}
+.gfoot .btn{flex:1;justify-content:center}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink);opacity:.78}
+.btn.ghost:hover{border-color:var(--gold);color:var(--gold);opacity:1}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.gend{text-align:center;padding:10px 0 4px}
+.gend .big{font-size:46px;color:var(--gold);letter-spacing:4px;margin-bottom:6px}
+.gend .cmt{font-size:15px;color:var(--ink);letter-spacing:1px;margin-bottom:4px}
+.gend .sig{font-size:12px;color:var(--muted);letter-spacing:2px}
+@media (max-width:520px){#splash b{font-size:44px;letter-spacing:10px}.gup{font-size:19px;padding:18px 12px}}
 </style>
 </head>
 <body data-theme="light">
-<div id="splash"></div>
-<audio id="bgm" loop src="audio/petalverse.mp3"></audio>
+<div id="splash"><div class="sp-in"><b>飞花令</b><span>一字飞花 · 满目诗情</span></div></div>
 <div class="wrap">
   <header>
     <h1>飞花令<span class="en">PETAL VERSE</span></h1>
     <div class="toolbar">
       <button id="btnTheme" onclick="toggleTheme()">🌙 暗色</button>
-      <button id="btnSound" onclick="toggleSound()" title="背景音乐">♪ 音乐</button>
+      <button id="btnSound" onclick="toggleSound()" title="音效开关">♪ 音效</button>
       <button id="btnLang" onclick="toggleLang()">EN</button>
     </div>
   </header>
   <div class="sub" id="subtitle">一字飞花，满目诗情</div>
 
+  <div class="modes" id="modes">
+    <button class="mode on" data-m="read" onclick="switchMode('read')">📖 赏句</button>
+    <button class="mode" data-m="play" onclick="switchMode('play')">🎋 对句</button>
+  </div>
+
   <div class="chips" id="chips"></div>
 
-  <div class="panel">
+  <div class="panel" id="paneRead">
     <h2 id="ptitle">选一个令字</h2>
     <div class="hint" id="phint">点击上方令字，展开含该字的经典诗句；再点诗句可看完整解读</div>
     <div class="randbar">
@@ -98,6 +158,25 @@ footer a{color:var(--gold); text-decoration:none;}
     </div>
     <div class="spot" id="spot">—</div>
     <ul class="plist" id="plist"></ul>
+  </div>
+
+  <div class="panel" id="panePlay" style="display:none">
+    <h2 id="gTitle">飞花令 · 对句</h2>
+    <div class="hint" id="gHint">看清令字与上句，从四句中挑出原诗的下一句；不必计时，慢慢想。</div>
+    <div class="gbar">
+      <div class="gch" id="gCh">花</div>
+      <div class="gmeta">
+        <div>第 <b id="gProg">1</b> 句 / 共 <b id="gTot">10</b> 句</div>
+        <div>已接 <b id="gScore">0</b> 句花令</div>
+      </div>
+    </div>
+    <div class="gup" id="gUp">——</div>
+    <div class="gopts" id="gOpts"></div>
+    <div class="gfeed" id="gFeed"></div>
+    <div class="gfoot">
+      <button class="btn ghost" id="gNew" onclick="startGame()">换一局</button>
+      <button class="btn" id="gNext" onclick="nextTurn()" disabled>下一句</button>
+    </div>
   </div>
 
   <div class="panel">
@@ -111,11 +190,9 @@ footer a{color:var(--gold); text-decoration:none;}
 
   <footer>
     <div class="sisters"><span id="sisterLabel">姊妹工具</span> ·
-      <a href="https://podcatcher962.github.io/PixelBaZi/">PixelBaZi</a> ·
-      <a href="https://podcatcher962.github.io/IChing/">IChing</a> ·
-      <a href="https://podcatcher962.github.io/YuguTether/">YuguTether</a> ·
-      <a href="https://podcatcher962.github.io/ZiOracle/">ZiOracle</a> ·
-      <a href="https://podcatcher962.github.io/AvalokitaOracle/">AvalokitaOracle</a>
+      <a href="https://podcatcher962.github.io/xianidle/">拾闲</a> ·
+      <a href="https://podcatcher962.github.io/XianReverie/">闲坐</a> ·
+      <a href="https://podcatcher962.github.io/GentleJoy/">清欢</a>
     </div>
     <div>永远的兰兰 · Lanlan Eternal</div>
   </footer>
@@ -486,8 +563,11 @@ const I18N={
      rand:"随机一句",fav:"我的收藏",pick:"挑一个令字",empty:"—",noFav:"还没有收藏的诗句",favs:"收藏的诗句",
      useTitle:"使用说明",discTitle:"免责声明",aboutTitle:"关于",
      use:`<p>飞花令是中国古代酒令之一，源出唐代韩翃《寒食》：「春城无处不飞花」。</p>
-       <h3>玩法</h3><ul><li>选一个「令字」</li><li>看含该字的经典诗句</li><li>轮流说出含令字的诗句，不可重复，接不上者饮一杯</li></ul>
-       <h3>操作</h3><ul><li>点上方令字 → 切换诗句库</li><li>点某句诗 → 查看全诗与解读</li><li>「随机一句」→ 抽取一句</li><li>点 ★ → 收藏喜欢的诗句</li></ul>`,
+       <h3>两种玩法</h3>
+       <ul><li><b>赏句</b>：点上方任一令字，展开含该字的经典诗句；点诗句可看全诗、英译与解读，点 ★ 收藏。</li>
+       <li><b>对句</b>：抽一个令字，系统给出上句，你从四句里挑出原诗的下一句。一局十句，不计时、不扣分，答错会告诉你原句与出处。</li></ul>
+       <h3>三步上手</h3><ul><li>① 点顶部「🎋 对句」</li><li>② 看令字与上句，选一句</li><li>③ 点「下一句」继续，或「换一局」换令字</li></ul>
+       <h3>其他</h3><ul><li>「🎋 对句」下点任一令字 → 直接指定该字开局</li><li>右上「EN」切换中英，「🌙」切换明暗，「♪」开关音效</li></ul>`,
      disc:`<p>本软件仅供中华古典诗词的学习、赏析与娱乐。</p>
        <p>所载诗句、译文与解读均整理自公开文献，仅供参考，可能存在疏漏，欢迎指正。</p>
        <p>本软件不含任何占卜、预测、迷信内容，亦不用于商业用途。</p>`,
@@ -498,8 +578,9 @@ const I18N={
      rand:"Random",fav:"Favorites",pick:"Choose a character",empty:"—",noFav:"No favorites yet",favs:"Favorites",
      useTitle:"How to use",discTitle:"Disclaimer",aboutTitle:"About",
      use:`<p>Feihua Ling is an ancient Chinese drinking game, named after Han Hong's poem: "Spring city, nowhere without flying flowers."</p>
-       <h3>Rules</h3><ul><li>Pick a keyword</li><li>Read classic verses containing it</li><li>Take turns quoting verses with the keyword, no repeats</li></ul>
-       <h3>Tips</h3><ul><li>Tap a keyword to switch the verse list</li><li>Tap a verse to read the full poem and notes</li><li>"Random" draws a verse</li><li>Tap ★ to save favorites</li></ul>`,
+       <h3>Two modes</h3><ul><li><b>Read</b>: tap a keyword to list classic verses containing it; tap a verse for the full poem, translation and notes.</li>
+       <li><b>Match</b>: a keyword is drawn, you are given the first line, and you pick the original second line out of four. Ten rounds, no timer, no penalty.</li></ul>
+       <h3>Quick start</h3><ul><li>1. Tap "🎋 对句" at the top</li><li>2. Read the keyword and first line, pick one</li><li>3. "下一句" for the next, "换一局" for a new keyword</li></ul>`,
      disc:`<p>This app is for the study, appreciation and enjoyment of classical Chinese poetry only.</p>
        <p>Verses, translations and notes are compiled from public sources for reference and may contain errors.</p>
        <p>It contains no divination, fortune-telling or superstition, and is not for commercial use.</p>`,
@@ -522,6 +603,7 @@ function renderChips(){
   });
 }
 function select(x){
+  if(MODE==="play"){ startGame(x.ch); return; }
   cur=x;
   renderChips();
   $("ptitle").textContent=tr("ptitle")+" · "+x.ch;
@@ -578,25 +660,40 @@ function toggleTheme(){
   $("btnTheme").textContent=theme==="light"?"🌙 暗色":"☀ 亮色";
   localStorage.setItem("feihua_theme",theme);
 }
-// 背景音乐（默认播放）
+// 音效：全部用 WebAudio 现场合成，不依赖任何外部音频文件
 let soundOn = true;
+let AC = null;
+function ac(){
+  if(!AC){
+    const C = window.AudioContext || window.webkitAudioContext;
+    if(!C) return null;
+    AC = new C();
+  }
+  if(AC.state === "suspended") AC.resume();
+  return AC;
+}
+// 一声短促的「拨弦」，音高按五声音阶排
+function pluck(step, gain){
+  if(!soundOn) return;
+  const a = ac(); if(!a) return;
+  const scale = [0, 2, 4, 7, 9, 12, 14, 16];
+  const f = 261.63 * Math.pow(2, scale[Math.max(0, Math.min(7, step))] / 12);
+  const t = a.currentTime;
+  const osc = a.createOscillator(), g = a.createGain();
+  osc.type = "triangle";
+  osc.frequency.setValueAtTime(f, t);
+  osc.frequency.exponentialRampToValueAtTime(f * 0.985, t + 0.5);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain || 0.16, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.75);
+  osc.connect(g); g.connect(a.destination);
+  osc.start(t); osc.stop(t + 0.8);
+}
 function toggleSound(){
   soundOn = !soundOn;
-  const bgm = document.getElementById('bgm');
-  if(soundOn){ bgm.play().catch(()=>{}); }
-  else { bgm.pause(); }
   $("btnSound").className = soundOn ? 'on' : '';
+  if(soundOn) pluck(4);
 }
-(function(){
-  const bgm = document.getElementById('bgm');
-  if(!bgm) return;
-  bgm.volume = 0.25;
-  bgm.play().catch(()=>{});
-  $("btnSound").className = 'on';
-  document.addEventListener('pointerdown', function(){
-    if(soundOn && bgm.paused) bgm.play().catch(()=>{});
-  });
-})();
 function toggleLang(){
   lang=lang==="zh"?"en":"zh";
   localStorage.setItem("feihua_lang",lang);
@@ -610,10 +707,13 @@ function switchTab(k){
 }
 function applyLang(){
   $("subtitle").textContent=tr("subtitle");
+  var mb=document.querySelectorAll(".mode");
+  if(mb[0]) mb[0].textContent = lang==="en" ? "📖 Read" : "📖 赏句";
+  if(mb[1]) mb[1].textContent = lang==="en" ? "🎋 Match" : "🎋 对句";
   $("btnRand").textContent=tr("rand");
   $("btnFav").textContent=tr("fav");
   $("btnLang").textContent=lang==="en"?"中文":"EN";
-  $("btnSound").textContent=lang==="en"?"♪ Music":"♪ 音乐";
+  $("btnSound").textContent=lang==="en"?"♪ SFX":"♪ 音效";
   $("sisterLabel").textContent=tr("sister");
   const tabs=document.querySelectorAll(".tab");
   tabs[0].textContent=tr("useTitle");
@@ -629,11 +729,193 @@ function applyLang(){
   const active=document.querySelector(".tab.on");
   if(active){switchTab(active.getAttribute("data-t"));}
 }
+/* ══════════════ 对句玩法 ══════════════ */
+var MODE = "read";
+var PAIRS = {};          // 令字 -> [{a:上句, b:下句, t:诗题, au:作者}]
+var NOPTS = 4;
+var gPool = [], gIdx = 0, gTotal = 10, gRight = 0, gCh = "花", gCur = null, gLocked = false;
+
+// 从完整诗文中切出「上句→下句」，只保留像样的对句
+function buildPairs(){
+  FEIHUA.forEach(function(item){
+    var ch = item.ch, arr = [], seen = {};
+    item.poems.forEach(function(p){
+      var F = String(p.F || "").replace(/……/g, "。");
+      F.split(/[。！？]/).forEach(function(sent){
+        var parts = sent.split(/[，；、]/).map(function(s){ return s.trim(); }).filter(Boolean);
+        if(parts.length < 2) return;
+        var a = parts[0], b = parts[1];
+        if(a.length < 5 || b.length < 5) return;
+        if(a.indexOf("…") >= 0 || b.indexOf("…") >= 0) return;
+        var k = a + ">" + b;
+        if(seen[k]) return;
+        seen[k] = 1;
+        arr.push({ a: a, b: b, t: p.T, au: p.A });
+      });
+    });
+    PAIRS[ch] = arr;
+  });
+}
+
+function shuffle(a){
+  for(var i = a.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1)), t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function esc(s){
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function switchMode(m){
+  MODE = m;
+  var btns = document.querySelectorAll(".mode");
+  for(var i = 0; i < btns.length; i++){
+    btns[i].className = "mode" + (btns[i].getAttribute("data-m") === m ? " on" : "");
+  }
+  $("paneRead").style.display = (m === "read") ? "" : "none";
+  $("panePlay").style.display = (m === "play") ? "" : "none";
+  if(m === "play" && !gCur) startGame();
+}
+
+function startGame(ch){
+  var chs = FEIHUA.map(function(x){ return x.ch; });
+  if(!ch) ch = chs[Math.floor(Math.random() * chs.length)];
+  var all = (PAIRS[ch] || []).slice();
+  if(!all.length){ return; }
+  // 优先「上句本身就含令字」的对句；够 5 句就只用这些，宁少而准
+  var strong = all.filter(function(x){ return x.a.indexOf(ch) >= 0; });
+  var pool = shuffle(strong.length >= 5 ? strong : all);
+  gCh = ch;
+  gPool = pool;
+  gTotal = Math.min(10, pool.length);
+  gIdx = 0; gRight = 0; gCur = null; gLocked = false;
+  $("gCh").textContent = ch;
+  $("gTot").textContent = gTotal;
+  $("gNext").textContent = "下一句";
+  $("gNext").onclick = function(){ nextTurn(); };
+  renderTurn();
+  switchMode("play");
+}
+
+function renderTurn(){
+  gLocked = false;
+  var p = gPool[gIdx];
+  gCur = p;
+  $("gProg").textContent = gIdx + 1;
+  $("gScore").textContent = gRight;
+  $("gFeed").innerHTML = "";
+  $("gNext").disabled = true;
+
+  // 上句：把令字标出来
+  var up = esc(p.a);
+  if(up.indexOf(gCh) >= 0) up = up.split(gCh).join("<em>" + gCh + "</em>");
+  $("gUp").innerHTML = up;
+
+  // 干扰项：同一令字下的别的句子，优先长度接近的
+  var cand = (PAIRS[gCh] || []).filter(function(x){ return x.b !== p.b; });
+  cand.sort(function(x, y){ return Math.abs(x.b.length - p.b.length) - Math.abs(y.b.length - p.b.length); });
+  cand = shuffle(cand.slice(0, 14));
+
+  var opts = [{ txt: p.b, ok: true }], used = {};
+  used[p.b] = 1;
+  for(var i = 0; i < cand.length && opts.length < NOPTS; i++){
+    if(used[cand[i].b]) continue;
+    used[cand[i].b] = 1;
+    opts.push({ txt: cand[i].b, ok: false });
+  }
+  // 该令字池子太小则跨池补足，保证永远四个选项
+  if(opts.length < NOPTS){
+    var extra = [];
+    FEIHUA.forEach(function(it){
+      if(it.ch === gCh) return;
+      it.poems.forEach(function(q){
+        var F = String(q.F || "").replace(/……/g, "。");
+        F.split(/[。！？]/).forEach(function(sent){
+          var ps = sent.split(/[，；、]/).map(function(s){ return s.trim(); }).filter(Boolean);
+          if(ps.length >= 2 && ps[1].length >= 5 && !used[ps[1]]) extra.push(ps[1]);
+        });
+      });
+    });
+    extra = shuffle(extra);
+    for(var j = 0; j < extra.length && opts.length < NOPTS; j++){
+      if(used[extra[j]]) continue;
+      used[extra[j]] = 1;
+      opts.push({ txt: extra[j], ok: false });
+    }
+  }
+
+  shuffle(opts);
+  var box = $("gOpts");
+  box.innerHTML = "";
+  opts.forEach(function(o){
+    var b = document.createElement("button");
+    b.className = "gopt";
+    b.type = "button";
+    b.textContent = o.txt;
+    b.onclick = function(){ answer(b, o.ok); };
+    box.appendChild(b);
+  });
+}
+
+function answer(btn, ok){
+  if(gLocked) return;
+  gLocked = true;
+  var btns = document.querySelectorAll("#gOpts .gopt");
+  for(var i = 0; i < btns.length; i++){
+    btns[i].disabled = true;
+    if(btns[i].textContent === gCur.b) btns[i].className = "gopt ok";
+  }
+  if(ok){
+    gRight++;
+    $("gScore").textContent = gRight;
+    $("gFeed").innerHTML = "接得好 —— 出自 " + esc(gCur.au) + "《" + esc(gCur.t) + "》";
+    pluck(5 + Math.min(2, gRight % 3), 0.15);
+  }else{
+    btn.className = "gopt no";
+    $("gFeed").innerHTML = "原句是「<b>" + esc(gCur.b) + "</b>」—— " + esc(gCur.au) + "《" + esc(gCur.t) + "》";
+    pluck(0, 0.13);
+  }
+  $("gNext").disabled = false;
+  try{ $("gNext").focus({ preventScroll: true }); }catch(e){}
+}
+
+function nextTurn(){
+  gIdx++;
+  if(gIdx >= gTotal){ endGame(); return; }
+  renderTurn();
+}
+
+function endGame(){
+  var cmt;
+  var rate = gTotal ? gRight / gTotal : 0;
+  if(gRight === gTotal && gTotal >= 5) cmt = "全中，可为诗社祭酒。";
+  else if(rate >= 0.8) cmt = "腹有诗书，令官颔首。";
+  else if(rate >= 0.5) cmt = "已得半壁，不妨再温几首。";
+  else cmt = "令官斟酒一杯 —— 先去「赏句」读几首，再来接。";
+  $("gUp").innerHTML = '<div class="gend"><div class="big">' + gRight + " / " + gTotal + "</div>" +
+    '<div class="cmt">' + esc(cmt) + "</div>" +
+    '<div class="sig">令字「' + esc(gCh) + "」· 永远的兰兰</div></div>";
+  $("gOpts").innerHTML = "";
+  $("gFeed").innerHTML = "点「再来一局」换一个令字，或点上方任一令字指定开局。";
+  $("gNext").textContent = "再来一局";
+  $("gNext").disabled = false;
+  $("gNext").onclick = function(){ startGame(); };
+  pluck(7, 0.16);
+  gCur = null;
+}
+
 function init(){
   document.body.setAttribute("data-theme",theme);
   $("btnTheme").textContent=theme==="light"?"🌙 暗色":"☀ 亮色";
   applyLang();
   renderChips();
+  buildPairs();
+  if(!/[?&]m=play/.test(location.search) && FEIHUA[0]) select(FEIHUA[0]);
+  var sp=document.getElementById("splash");
+  if(sp){ sp.onclick=function(){ sp.style.display="none"; }; setTimeout(function(){ if(sp) sp.style.display="none"; },3400); }
+  if(/[?&]m=play/.test(location.search)) switchMode("play");
 }
 init();
 </script>
