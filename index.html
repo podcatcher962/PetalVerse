@@ -200,7 +200,7 @@ footer a{color:var(--gold); text-decoration:none;}
       <a target="_blank" rel="noopener" href="https://podcatcher962.github.io/XianReverie/">闲坐</a> ·
       <a target="_blank" rel="noopener" href="https://podcatcher962.github.io/GentleJoy/">清欢</a>
     </div>
-    <div>飞花令 PetalVerse v2.4 · 永远的兰兰 · Lanlan Eternal</div>
+    <div>飞花令 PetalVerse v2.5 · 永远的兰兰 · Lanlan Eternal</div>
   </footer>
 </div>
 
@@ -586,7 +586,7 @@ const I18N={
      use:`<p>Feihua Ling is an ancient Chinese drinking game, named after Han Hong's poem: "Spring city, nowhere without flying flowers."</p>
        <h3>Two modes</h3><ul><li><b>Read</b>: tap a keyword to list classic verses containing it; tap a verse for the full poem, translation and notes.</li>
        <li><b>Match</b>: a keyword is drawn, you are given the first line, and you pick the original second line out of four. Up to ten rounds, no timer, no penalty.</li></ul>
-       <h3>Quick start</h3><ul><li>1. Tap "🎋 对句" at the top</li><li>2. Read the keyword and first line, pick one</li><li>3. "下一句" for the next, "换一局" for a new keyword</li></ul>`,
+       <h3>Quick start</h3><ul><li>1. Tap "🎋 Match" at the top</li><li>2. Read the keyword and first line, pick one</li><li>3. "Next" for the next line, "New round" for a new keyword</li></ul>`,
      disc:`<p>This app is for the study, appreciation and enjoyment of classical Chinese poetry only.</p>
        <p>Verses, translations and notes are compiled from public sources for reference and may contain errors.</p>
        <p>It contains no divination, fortune-telling or superstition, and is not for commercial use.</p>`,
@@ -626,7 +626,7 @@ function select(x){
   $("ptitle").textContent=tr("ptitle")+" · "+x.ch;
   $("phint").textContent=x.poems.length+" "+(lang==="zh"?"句含「":"verses with \"")+x.ch+(lang==="zh"?"」· 点诗句看全诗与解读":"\" · tap a verse for the full reading");
   renderList(x);
-  $("spot").textContent=tr("empty");
+  spState="empty"; $("spot").textContent=tr("empty");
 }
 function renderList(x){
   const ul=$("plist"); ul.innerHTML="";
@@ -661,20 +661,39 @@ function star(el){
   else{fav.push(k); el.classList.add("on");}
   localStorage.setItem("feihua_fav",JSON.stringify(fav));
 }
+/* 赏句区那句提示的状态：empty / noFav / favs 是界面文案，line 是抽到的那首诗
+   （line 有现成英译 p.E，切语言应该跟着换，不然英文模式下会停在中文） */
+var spState="empty", spPoem=null;
+function refreshSpot(){
+  if(spState==="empty"){ $("spot").textContent=tr("empty"); }
+  else if(spState==="noFav"){ $("spot").textContent=tr("noFav"); }
+  else if(spState==="favs"){
+    const list=fav.map(function(k){const a=k.split("|"); return '「'+a[1]+'」';}).join(" · ");
+    $("spot").innerHTML=tr("favs")+(lang==="en"?" · ":"：")+list;
+  }else if(spState==="line" && spPoem){
+    $("spot").innerHTML=(lang==="en"?spPoem.E:spPoem.L)+'<span class="who">—— '+spPoem.A+' '+spPoem.T+'</span>';
+  }
+}
 function randomPick(){
   if(!cur){return;}
   const p=cur.poems[Math.floor(Math.random()*cur.poems.length)];
+  spState="line"; spPoem=p;
   $("spot").innerHTML=(lang==="en"?p.E:p.L)+'<span class="who">—— '+p.A+' '+p.T+'</span>';
 }
 function toggleFavList(){
-  if(!fav.length){$("spot").textContent=tr("noFav");return;}
-  const list=fav.map(function(k){const a=k.split("|"); return '「'+a[1]+'」';}).join(" · ");
-  $("spot").innerHTML=tr("favs")+"："+list;
+  if(!fav.length){ spState="noFav"; $("spot").textContent=tr("noFav"); return; }
+  spState="favs"; refreshSpot();
+}
+/* 主题按钮的文案：以前只在 init / toggleTheme 里写，切 EN 后仍留着「🌙 暗色」 */
+function themeText(){
+  var b=$("btnTheme"); if(!b) return;
+  b.textContent = lang==="en" ? (theme==="light"?"🌙 Dark":"☀ Light")
+                              : (theme==="light"?"🌙 暗色":"☀ 亮色");
 }
 function toggleTheme(){
   theme=theme==="light"?"dark":"light";
   document.body.setAttribute("data-theme",theme);
-  $("btnTheme").textContent=theme==="light"?"🌙 暗色":"☀ 亮色";
+  themeText();
   localStorage.setItem("feihua_theme",theme);
 }
 // 音效：全部用 WebAudio 现场合成，不依赖任何外部音频文件
@@ -752,6 +771,8 @@ function applyLang(){
   $("btnFav").textContent=tr("fav");
   $("btnLang").textContent=lang==="en"?"中文":"EN";
   $("btnSound").textContent=lang==="en"?"♪ SFX":"♪ 音效";
+  themeText();          /* 主题按钮：以前切语言不跟，EN 下仍写「🌙 暗色」 */
+  refreshSpot();        /* 赏句空态/收藏列表的提示语跟着语言 */
   $("sisterLabel").textContent=tr("sister");
   const tabs=document.querySelectorAll(".tab");
   tabs[0].textContent=tr("useTitle");
@@ -1004,7 +1025,7 @@ function endGame(){
 
 function init(){
   document.body.setAttribute("data-theme",theme);
-  $("btnTheme").textContent=theme==="light"?"🌙 暗色":"☀ 亮色";
+  themeText();
   buildPairs();
   applyLang();
   renderChips();
