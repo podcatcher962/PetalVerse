@@ -200,7 +200,7 @@ footer a{color:var(--gold); text-decoration:none;}
       <a target="_blank" rel="noopener" href="https://podcatcher962.github.io/XianReverie/">闲坐</a> ·
       <a target="_blank" rel="noopener" href="https://podcatcher962.github.io/GentleJoy/">清欢</a>
     </div>
-    <div>飞花令 PetalVerse v2.3 · 永远的兰兰 · Lanlan Eternal</div>
+    <div>飞花令 PetalVerse v2.4 · 永远的兰兰 · Lanlan Eternal</div>
   </footer>
 </div>
 
@@ -736,6 +736,7 @@ function applyLang(){
     $("gNext").textContent = done ? (lang==="en" ? "New round" : "再来一局")
                                   : (lang==="en" ? "Next" : "下一句");
     if(done && typeof renderEnd==="function") renderEnd();   /* 结算页跟着语言重绘 */
+    else if(typeof drawFeed==="function") drawFeed();        /* 未结算：作答反馈跟着语言重绘 */
   }
   if($("gLine")) $("gLine").innerHTML = lang==="en"
     ? 'Q <b id="gProg">'+(gIdx+1)+'</b> / <b id="gTot">'+gTotal+'</b>'
@@ -771,6 +772,9 @@ var MODE = "read";
 var PAIRS = {};          // 令字 -> [{a:上句, b:下句, t:诗题, au:作者}]
 var NOPTS = 4;
 var gPool = [], gIdx = 0, gTotal = 10, gRight = 0, gCh = "花", gCur = null, gLocked = false;
+/* 作答反馈的状态：null=无 / {type:"swap"}换字提示 / {type:"ok"}答对 / {type:"no"}答错
+   以前是直接写死中文进 innerHTML，切语言不重绘，EN 下会露出「接得好 —— 出自…」 */
+var gFb = null;
 
 // 从完整诗文中切出「上句→下句」，只保留像样的对句
 /* 唯一判据：上句本身含令字的联数。灰标、出题、换字都从这一个函数取，
@@ -847,11 +851,37 @@ function startGame(ch){
   $("gNext").onclick = function(){ nextTurn(); };
   renderTurn();
   if(asked && asked !== ch){
-    $("gFeed").innerHTML = (lang==="en")
-      ? "Not enough matching lines for \u201c" + esc(asked) + "\u201d yet — starting with \u201c" + esc(ch) + "\u201d instead."
-      : "「" + esc(asked) + "」可用的对句还不够，先拿「" + esc(ch) + "」开一局。";
+    gFb = { type: "swap", from: asked, to: ch };
+  }else{
+    gFb = null;
   }
+  drawFeed();
   switchMode("play");
+}
+
+/* 把 gFb 渲染成当前语言的那句话。renderTurn / answer / startGame / applyLang 都走这里，
+   所以切语言时这句反馈跟着变，不会停在生成时的语言 */
+function drawFeed(){
+  var el = $("gFeed");
+  if(!el) return;
+  var en = (lang === "en"), f = gFb;
+  if(!f){ el.innerHTML = ""; return; }
+  if(f.type === "swap"){
+    el.innerHTML = en
+      ? "Not enough matching lines for \u201c" + esc(f.from) + "\u201d yet — starting with \u201c" + esc(f.to) + "\u201d instead."
+      : "「" + esc(f.from) + "」可用的对句还不够，先拿「" + esc(f.to) + "」开一局。";
+    return;
+  }
+  if(!gCur){ el.innerHTML = ""; return; }
+  if(f.type === "ok"){
+    el.innerHTML = en
+      ? "Well matched \u2014 from " + esc(gCur.au) + ", \u201c" + esc(gCur.t) + "\u201d"
+      : "接得好 —— 出自 " + esc(gCur.au) + "《" + esc(gCur.t) + "》";
+  }else{
+    el.innerHTML = en
+      ? "The original line is \u201c<b>" + esc(gCur.b) + "</b>\u201d \u2014 " + esc(gCur.au) + ", \u201c" + esc(gCur.t) + "\u201d"
+      : "原句是「<b>" + esc(gCur.b) + "</b>」—— " + esc(gCur.au) + "《" + esc(gCur.t) + "》";
+  }
 }
 
 function renderTurn(){
@@ -860,7 +890,8 @@ function renderTurn(){
   gCur = p;
   $("gProg").textContent = gIdx + 1;
   $("gScore").textContent = gRight;
-  $("gFeed").innerHTML = "";
+  gFb = null;
+  drawFeed();
   $("gNext").disabled = true;
 
   // 上句：把令字标出来
@@ -925,11 +956,13 @@ function answer(btn, ok){
   if(ok){
     gRight++;
     $("gScore").textContent = gRight;
-    $("gFeed").innerHTML = "接得好 —— 出自 " + esc(gCur.au) + "《" + esc(gCur.t) + "》";
+    gFb = { type: "ok" };
+    drawFeed();
     pluck(5 + Math.min(2, gRight % 3), 0.15);
   }else{
     btn.className = "gopt no";
-    $("gFeed").innerHTML = "原句是「<b>" + esc(gCur.b) + "</b>」—— " + esc(gCur.au) + "《" + esc(gCur.t) + "》";
+    gFb = { type: "no" };
+    drawFeed();
     pluck(0, 0.13);
   }
   $("gNext").disabled = false;
@@ -945,6 +978,7 @@ function nextTurn(){
 /* 结算面板改成「按当前局面重绘」：切语言时也走这里，否则那段文本会停在生成时的语言 */
 function renderEnd(){
   var en = (lang === "en");
+  gFb = null;
   var rate = gTotal ? gRight / gTotal : 0, cmt;
   if(gRight === gTotal && gTotal >= 4) cmt = en ? "A clean sweep \u2014 the toastmaster bows to you." : "全中，可为诗社祭酒。";
   else if(rate >= 0.8) cmt = en ? "Well read; the toastmaster nods." : "腹有诗书，令官颔首。";
