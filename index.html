@@ -865,6 +865,70 @@ function buildPairs(){
     });
     PAIRS[ch] = arr;
   });
+  buildLenIndex();
+}
+
+/* 全局「按字数」索引：对句的四个选项必须同字数。
+   原先是按「字数差」排序取前 14，池子里同字数的句子不够就往下顺延，
+   于是 5 字句和 7 字句混进同一组选项 —— 数一下上句几个字就能挑出答案。
+   这里把全部下句连同出处按字数归档，保证同字数的干扰项够用。 */
+var BYLEN = {};
+function buildLenIndex(){
+  BYLEN = {};
+  Object.keys(PAIRS).forEach(function(ch){
+    PAIRS[ch].forEach(function(q){
+      var L = q.b.length;
+      if(!BYLEN[L]) BYLEN[L] = [];
+      BYLEN[L].push({ s: q.b, t: q.t });
+    });
+  });
+  Object.keys(BYLEN).forEach(function(L){
+    var seen = {}, out = [];
+    BYLEN[L].forEach(function(o){ if(!seen[o.s]){ seen[o.s] = 1; out.push(o); } });
+    BYLEN[L] = out;
+  });
+}
+
+/* 取干扰项，分层优先：
+   ① 同令字池 + 同字数 + 同样「含不含令字」
+   ② 全库 + 同字数 + 同样含字状态（否则「只有正解带令字」会变成新线索）
+   ③ 全库 + 同字数
+   ④ 全库 + 差一个字（正解是 6/8/9 字的词句时，同字数句子凑不够 3 句）
+   ⑤ 同令字池兜底
+   每一层都排除「与正解同出于一首诗」的句子，免得同篇上下文直接泄底。 */
+function pickFakes(p, ch, need){
+  var want = p.b.length, has = p.b.indexOf(ch) >= 0;
+  function ok(o){ return o && o.s !== p.b && o.t !== p.t; }
+  function sameHas(list){ return list.filter(function(o){ return ok(o) && (o.s.indexOf(ch) >= 0) === has; }); }
+  var pool = (PAIRS[ch] || []).map(function(x){ return { s: x.b, t: x.t }; });
+  var near = (BYLEN[want - 1] || []).concat(BYLEN[want + 1] || []);
+  var tiers = [
+    sameHas(pool.filter(function(o){ return o.s.length === want; })),
+    sameHas(BYLEN[want] || []),
+    (BYLEN[want] || []).filter(ok),
+    sameHas(near),
+    pool.filter(ok)
+  ];
+  var seen = {}, out = [];
+  seen[p.b] = 1;
+  for(var t = 0; t < tiers.length && out.length < need * 3; t++){
+    var list = shuffle(tiers[t].slice());
+    for(var i = 0; i < list.length && out.length < need * 3; i++){
+      var s = list[i].s;
+      if(!s || seen[s]) continue;
+      seen[s] = 1;
+      out.push(s);
+    }
+  }
+  /* 绝对兜底：词句太少（6/8/9 字）时全库乱取，保证永远是四个选项 */
+  if(out.length < need){
+    Object.keys(PAIRS).forEach(function(k){
+      PAIRS[k].forEach(function(q){
+        if(out.length < need && q.b !== p.b && !seen[q.b]){ seen[q.b] = 1; out.push(q.b); }
+      });
+    });
+  }
+  return shuffle(out).slice(0, need);
 }
 
 function shuffle(a){
@@ -954,37 +1018,14 @@ function renderTurn(){
   if(up.indexOf(gCh) >= 0) up = up.split(gCh).join("<em>" + gCh + "</em>");
   $("gUp").innerHTML = up;
 
-  // 干扰项：同一令字下的别的句子，优先长度接近的
-  var cand = (PAIRS[gCh] || []).filter(function(x){ return x.b !== p.b; });
-  cand.sort(function(x, y){ return Math.abs(x.b.length - p.b.length) - Math.abs(y.b.length - p.b.length); });
-  cand = shuffle(cand.slice(0, 14));
-
+  // 干扰项：与正解同字数，堵掉「数上句字数选答案」
   var opts = [{ txt: p.b, ok: true }], used = {};
   used[p.b] = 1;
+  var cand = pickFakes(p, gCh, NOPTS - 1);
   for(var i = 0; i < cand.length && opts.length < NOPTS; i++){
-    if(used[cand[i].b]) continue;
-    used[cand[i].b] = 1;
-    opts.push({ txt: cand[i].b, ok: false });
-  }
-  // 该令字池子太小则跨池补足，保证永远四个选项
-  if(opts.length < NOPTS){
-    var extra = [];
-    FEIHUA.forEach(function(it){
-      if(it.ch === gCh) return;
-      it.poems.forEach(function(q){
-        var F = String(q.F || "").replace(/……/g, "。");
-        F.split(/[。！？]/).forEach(function(sent){
-          var ps = sent.split(/[，；、]/).map(function(s){ return s.trim(); }).filter(Boolean);
-          if(ps.length >= 2 && ps[1].length >= 5 && !used[ps[1]]) extra.push(ps[1]);
-        });
-      });
-    });
-    extra = shuffle(extra);
-    for(var j = 0; j < extra.length && opts.length < NOPTS; j++){
-      if(used[extra[j]]) continue;
-      used[extra[j]] = 1;
-      opts.push({ txt: extra[j], ok: false });
-    }
+    if(used[cand[i]]) continue;
+    used[cand[i]] = 1;
+    opts.push({ txt: cand[i], ok: false });
   }
 
   shuffle(opts);
